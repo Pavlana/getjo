@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m unittest:*)",
+      "Bash(python -m jobs.radar --dry-run:*)",
+      "Bash(python -m evals.run:*)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "ask": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(pip install:*)",
+      "Bash(python -m jobs.radar)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Edit(./.env)",
+      "Bash(cat .env*)",
+      "Bash(head .env*)",
+      "Bash(tail .env*)",
+      "Bash(less .env*)",
+      "Bash(vim .env*)",
+      "Bash(nano .env*)",
+      "Bash(printenv:*)",
+      "Bash(env)"
+    ],
+    "defaultMode": "default"
+  }
+}

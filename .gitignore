@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+config/cv.md
+data/*
+!data/.gitkeep
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+.claude/settings.local.json
