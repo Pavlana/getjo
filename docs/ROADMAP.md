@@ -10,7 +10,7 @@ Tick a box only when its acceptance criteria pass.
 - [x] Repo created (private for now), this kit copied in, first commit pushed with no secrets
 - [x] `.env` created locally from `.env.example`, filled with real values, confirmed ignored by `git status`
 - [x] `config/cv.md` created with the CV text, confirmed ignored by `git status`
-- [ ] `config/targets.toml` has 15 companies (board names can be blank until Wednesday)
+- [x] `config/targets.toml` has 15 companies (board names can be blank until Wednesday)
 
 **Concept:** secrets vs config vs code, and why each lives in a different place.
 

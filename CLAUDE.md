@@ -41,7 +41,7 @@ sources/   greenhouse.py, lever.py, ashby.py  -> each returns a list of Job dict
 jobs/      radar.py (fetch -> filter -> store -> score -> notify)
 evals/     cases/*.jsonl, run.py
 tests/     unit tests + fixtures/
-config/    targets.toml (companies), profile.toml (filters, rubric), cv.md (gitignored)
+config/    targets.toml (companies), profile.toml (filters, rubric), cv.md — all gitignored; *.example.toml are committed templates
 docs/      ROADMAP.md (iterations and tasks), design.md (diagram + decisions)
 ```
 

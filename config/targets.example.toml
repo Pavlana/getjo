@@ -1,0 +1,20 @@
+# Companies to watch. One [[company]] block each.
+# Copy to config/targets.toml (gitignored) and fill in your own list.
+# source: greenhouse | lever | ashby  ("" if not yet known)
+# board:  the name in the job board's web address, e.g. job-boards.greenhouse.io/<board>
+#         Find it on the company's careers page (open any job; the URL shows the board and name).
+
+[[company]]
+name = "Example Co"
+source = "greenhouse"
+board = "exampleco"
+
+[[company]]
+name = "Another Co"
+source = "lever"
+board = "anotherco"
+
+[[company]]
+name = "Third Co"
+source = "ashby"
+board = "thirdco"

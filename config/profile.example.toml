@@ -1,0 +1,21 @@
+# What counts as a match. Copy to config/profile.toml (gitignored) and edit freely;
+# the radar reads it on every run.
+
+[filter]
+# A title must contain at least one of these (case-insensitive)
+title_include = ["engineer", "architect"]
+# ...and none of these
+title_exclude = ["intern", "graduate", "director"]
+# A location must contain at least one of these
+locations = ["london", "remote"]
+
+[scoring]
+model = "claude-haiku-4-5-20251001"   # cheap model for scoring; change and compare with evals
+notify_threshold = 7                  # only scores >= this go to Telegram
+
+# The rubric Claude uses. Plain language, one line per criterion.
+rubric = [
+  "The role's core work matches the skills in my CV",
+  "Seniority level matches my experience",
+  "Location and working pattern suit me",
+]
