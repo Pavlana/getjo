@@ -18,8 +18,8 @@ Tick a box only when its acceptance criteria pass.
 
 ## Iteration 1 · Storage and notifications (Tue 29 Sep)
 
-- [ ] `core/config.py`: load `config/*.toml` and required env vars; fail fast with a clear message if one is missing
-- [ ] `core/store.py`: SQLite schema with `jobs` and `runs` tables. A job's primary key is `source:company:job_id`. `upsert_job()` returns whether the job is new
+- [x] `core/config.py`: load `config/*.toml` and required env vars; fail fast with a clear message if one is missing
+- [x] `core/store.py`: SQLite schema with `jobs` and `runs` tables. A job's primary key is `source:company:job_id`. `upsert_job()` returns whether the job is new
 - [ ] `core/notify.py`: `send_telegram(text)` using the Bot API `sendMessage`; splits messages over 4,000 characters
 - [ ] Tests: inserting the same job twice returns new=True, then new=False; notify is tested with a mocked HTTP call
 - [ ] `docs/design.md`: first diagram (source → filter → store → notify) and 3 decisions

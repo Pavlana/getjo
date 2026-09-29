@@ -39,6 +39,7 @@ One line each: date, decision, reason.
 - 2026-09-28: SQLite over files; gives deduplication by primary key and a `runs` history for free.
 - 2026-09-28: Filter by keywords before calling the LLM, so cost scales with relevant jobs, not all jobs.
 - 2026-09-29: `targets.toml` and `profile.toml` are gitignored with committed `.example.toml` copies; the job search stays private once the repo is public.
+- 2026-09-29: Env vars are loaded by the shell (`set -a; source .env; set +a`), not parsed in code; the same path works under cron, launchd and GitHub Actions.
 
 ## Known limitations
 
