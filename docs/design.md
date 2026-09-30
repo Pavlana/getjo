@@ -48,6 +48,7 @@ One line each: date, decision, reason.
 - 2026-09-30: `sources/ashby.py` mirrors `lever.py` — same retry loop, and Ashby also gives `descriptionPlain` directly. All three sources now have near-identical `_get_with_retry` functions; extracting the shared HTTP helper is the next task specifically so the duplication is visible in three real call sites before abstracting it, not guessed at from one or two.
 - 2026-09-30: `core/http.get_with_retry(url, *, label)` replaces each source's private retry loop; `label` is just for log lines, so one source retrying doesn't get confused with another. `notify.py`'s retry loop stays separate — it's a POST with a JSON body, a different shape than the three GET call sites this actually unifies.
 - 2026-09-30: Verified live — a deliberately wrong Greenhouse board name gets logged (`fetch failed for BrokenCo: 404 ...`) and skipped; the run still completes and the error lands in `runs.errors`. One source failing doesn't stop the others.
+- 2026-09-30: Architecture diagram exists twice, deliberately: `docs/architecture.svg` is a static, self-contained file (no CSS variables, no external fonts) so it renders on GitHub and doesn't depend on a live link; the Claude Artifact version linked from the README is the themed/dark-mode-aware one, for browsing rather than for the repo's permanent record. The Mermaid block already in this file stays as the terse, always-renders-in-any-markdown-viewer version.
 
 ## Known limitations
 
