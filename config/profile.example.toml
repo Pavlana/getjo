@@ -10,7 +10,7 @@ title_exclude = ["intern", "graduate", "director"]
 locations = ["london", "remote"]
 
 [scoring]
-model = "claude-haiku-4-5-20251001"   # cheap model for scoring; change and compare with evals
+model = "claude-haiku-4-5"            # cheap model for scoring; change and compare with evals
 notify_threshold = 7                  # only scores >= this go to Telegram
 
 # The rubric Claude uses. Plain language, one line per criterion.
