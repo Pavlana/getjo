@@ -31,11 +31,11 @@ Tick a box only when its acceptance criteria pass.
 
 ## Iteration 2 · First working version (Wed 30 Sep)
 
-- [ ] Fill in the job-board names in `targets.toml` (open each company's careers page and check which board it uses)
-- [ ] `sources/greenhouse.py`: `GET https://boards-api.greenhouse.io/v1/boards/{board}/jobs?content=true`, normalised to the shared Job shape (see `design.md`)
-- [ ] Save one real response per source as a test fixture; parse it in tests with no network
-- [ ] `jobs/radar.py`: fetch → keyword filter (title include/exclude, location) from `profile.toml` → store → notify only new jobs
-- [ ] `--dry-run` flag prints what would be sent and sends nothing
+- [x] Fill in the job-board names in `targets.toml` (open each company's careers page and check which board it uses)
+- [x] `sources/greenhouse.py`: `GET https://boards-api.greenhouse.io/v1/boards/{board}/jobs?content=true`, normalised to the shared Job shape (see `design.md`)
+- [x] Save one real response per source as a test fixture; parse it in tests with no network
+- [x] `jobs/radar.py`: fetch → keyword filter (title include/exclude, location) from `profile.toml` → store → notify only new jobs
+- [x] `--dry-run` flag prints what would be sent and sends nothing
 
 **Acceptance:** first run sends the matching jobs; an immediate second run sends nothing. Then make the repo public.
 **Concept:** the adapter pattern (many sources, one shape), polling.
