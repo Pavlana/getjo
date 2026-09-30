@@ -46,6 +46,8 @@ One line each: date, decision, reason.
 - 2026-09-30: `sources/lever.py` uses Lever's `descriptionPlain` field directly instead of stripping HTML like Greenhouse — Lever already provides a plain-text variant, so no parsing needed. Its description is shorter than Greenhouse's (missing the bullet-list sections), acceptable for now since scoring quality isn't evaluated until Iteration 5; revisit if evals show it hurts match quality.
 - 2026-09-30: `jobs/radar.py` now dispatches fetchers via a `FETCHERS = {"greenhouse": ..., "lever": ...}` dict instead of an if/elif chain — this is the second real source, which is the point "no abstraction until two real uses" says to introduce one.
 - 2026-09-30: `sources/ashby.py` mirrors `lever.py` — same retry loop, and Ashby also gives `descriptionPlain` directly. All three sources now have near-identical `_get_with_retry` functions; extracting the shared HTTP helper is the next task specifically so the duplication is visible in three real call sites before abstracting it, not guessed at from one or two.
+- 2026-09-30: `core/http.get_with_retry(url, *, label)` replaces each source's private retry loop; `label` is just for log lines, so one source retrying doesn't get confused with another. `notify.py`'s retry loop stays separate — it's a POST with a JSON body, a different shape than the three GET call sites this actually unifies.
+- 2026-09-30: Verified live — a deliberately wrong Greenhouse board name gets logged (`fetch failed for BrokenCo: 404 ...`) and skipped; the run still completes and the error lands in `runs.errors`. One source failing doesn't stop the others.
 
 ## Known limitations
 

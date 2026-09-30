@@ -3,8 +3,6 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-import requests
-
 from sources.greenhouse import _strip_html, fetch_jobs, parse_jobs
 
 FIXTURE = json.loads((Path(__file__).parent / "fixtures" / "greenhouse_jobs.json").read_text())
@@ -54,52 +52,17 @@ class ParseJobsTest(unittest.TestCase):
         self.assertEqual(parse_jobs("Anthropic", {"jobs": []}), [])
 
 
-def make_response(status_code: int, json_body: dict | None = None) -> mock.Mock:
-    resp = mock.Mock(spec=requests.Response)
-    resp.status_code = status_code
-    resp.json.return_value = json_body
-    if status_code >= 400:
-        resp.raise_for_status.side_effect = requests.HTTPError(f"{status_code} error")
-    else:
-        resp.raise_for_status.return_value = None
-    return resp
-
-
 class FetchJobsTest(unittest.TestCase):
-    @mock.patch("sources.greenhouse.requests.get")
-    def test_fetch_builds_correct_url_and_parses_response(self, mock_get):
-        mock_get.return_value = make_response(200, FIXTURE)
+    """Retry/backoff behavior is tested once, centrally, in tests/test_http.py."""
+
+    @mock.patch("sources.greenhouse.get_with_retry")
+    def test_fetch_builds_correct_url_label_and_parses_response(self, mock_get):
+        mock_get.return_value.json.return_value = FIXTURE
         jobs = fetch_jobs("Anthropic", "anthropic")
         mock_get.assert_called_once_with(
-            "https://boards-api.greenhouse.io/v1/boards/anthropic/jobs?content=true", timeout=10
+            "https://boards-api.greenhouse.io/v1/boards/anthropic/jobs?content=true", label="greenhouse"
         )
         self.assertEqual(len(jobs), 2)
-
-    @mock.patch("sources.greenhouse.time.sleep")
-    @mock.patch("sources.greenhouse.requests.get")
-    def test_retries_on_429_then_succeeds(self, mock_get, mock_sleep):
-        mock_get.side_effect = [make_response(429), make_response(200, FIXTURE)]
-        jobs = fetch_jobs("Anthropic", "anthropic")
-        self.assertEqual(mock_get.call_count, 2)
-        mock_sleep.assert_called_once()
-        self.assertEqual(len(jobs), 2)
-
-    @mock.patch("sources.greenhouse.time.sleep")
-    @mock.patch("sources.greenhouse.requests.get")
-    def test_non_retryable_4xx_raises_immediately(self, mock_get, mock_sleep):
-        mock_get.return_value = make_response(404)
-        with self.assertRaises(requests.HTTPError):
-            fetch_jobs("Anthropic", "wrong-board")
-        self.assertEqual(mock_get.call_count, 1)
-        mock_sleep.assert_not_called()
-
-    @mock.patch("sources.greenhouse.time.sleep")
-    @mock.patch("sources.greenhouse.requests.get")
-    def test_exhausts_retries_on_persistent_500(self, mock_get, mock_sleep):
-        mock_get.return_value = make_response(500)
-        with self.assertRaises(requests.HTTPError):
-            fetch_jobs("Anthropic", "anthropic")
-        self.assertEqual(mock_get.call_count, 5)
 
 
 if __name__ == "__main__":
