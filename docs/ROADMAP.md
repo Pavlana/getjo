@@ -44,7 +44,7 @@ Tick a box only when its acceptance criteria pass.
 
 ## Iteration 3 · More sources and resilience (Thu 1 Oct)
 
-- [ ] `sources/lever.py`: `GET https://api.lever.co/v0/postings/{board}?mode=json`
+- [x] `sources/lever.py`: `GET https://api.lever.co/v0/postings/{board}?mode=json`
 - [ ] `sources/ashby.py`: `GET https://api.ashbyhq.com/posting-api/job-board/{board}`
 - [ ] Shared HTTP helper: timeout, retries on 429/5xx with backoff, clear log line per failure
 - [ ] One broken board (wrong name, 404) is logged and skipped; the run still finishes and records the error in `runs`

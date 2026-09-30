@@ -5,9 +5,11 @@ import logging
 from datetime import datetime, timezone
 
 from core import config, notify, store
-from sources import greenhouse
+from sources import greenhouse, lever
 
 logger = logging.getLogger(__name__)
+
+FETCHERS = {"greenhouse": greenhouse.fetch_jobs, "lever": lever.fetch_jobs}
 
 
 def matches_filter(job: dict, filter_cfg: dict) -> bool:
@@ -31,11 +33,12 @@ def _fetch_matches(targets: list[dict], filter_cfg: dict) -> tuple[list[dict], l
     fetched = 0
     for company in targets:
         name, source, board = company["name"], company["source"], company["board"]
-        if source != "greenhouse" or not board:
+        fetcher = FETCHERS.get(source)
+        if not fetcher or not board:
             logger.info("skipping %s: source %r not yet supported or board not set", name, source)
             continue
         try:
-            jobs = greenhouse.fetch_jobs(name, board)
+            jobs = fetcher(name, board)
         except Exception as e:  # one source failing must not stop the run
             logger.warning("fetch failed for %s: %s", name, e)
             errors.append(f"{name}: {e}")

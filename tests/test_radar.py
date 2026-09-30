@@ -20,7 +20,7 @@ PROFILE = {
 TARGETS = [
     {"name": "Acme", "source": "greenhouse", "board": "acme"},
     {"name": "NoBoard", "source": "greenhouse", "board": ""},
-    {"name": "OtherAts", "source": "lever", "board": "otherats"},
+    {"name": "Unsupported", "source": "ashby", "board": "unsupported"},
 ]
 
 
@@ -36,6 +36,11 @@ def make_job(job_id, title="AI Engineer", location="London, UK", company="Acme")
         "first_seen": "2026-09-30T09:00:00Z",
         "score": None,
     }
+
+
+def fetchers(**by_source: mock.Mock):
+    """Patch jobs.radar.FETCHERS for the duration of a `with` block, with mocks we can assert on."""
+    return mock.patch.dict("jobs.radar.FETCHERS", by_source, clear=True)
 
 
 class MatchesFilterTest(unittest.TestCase):
@@ -61,25 +66,24 @@ class MatchesFilterTest(unittest.TestCase):
 
 @mock.patch("jobs.radar.notify.send_telegram")
 @mock.patch("jobs.radar.store.connect")
-@mock.patch("jobs.radar.greenhouse.fetch_jobs")
 @mock.patch("jobs.radar.config.load_config")
 class RunDryRunTest(unittest.TestCase):
-    def test_dry_run_sends_and_stores_nothing(self, mock_load, mock_fetch, mock_connect, mock_send):
+    def test_dry_run_sends_and_stores_nothing(self, mock_load, mock_connect, mock_send):
         mock_load.return_value = {"targets": TARGETS, "profile": PROFILE}
-        mock_fetch.return_value = [make_job(1)]
 
-        run(dry_run=True)
+        with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
+            run(dry_run=True)
 
         mock_send.assert_not_called()
         mock_connect.assert_not_called()
 
-    def test_dry_run_prints_matches(self, mock_load, mock_fetch, mock_connect, mock_send):
+    def test_dry_run_prints_matches(self, mock_load, mock_connect, mock_send):
         mock_load.return_value = {"targets": TARGETS, "profile": PROFILE}
-        mock_fetch.return_value = [make_job(1, title="AI Engineer")]
 
         buf = io.StringIO()
-        with contextlib.redirect_stdout(buf):
-            run(dry_run=True)
+        with fetchers(greenhouse=mock.Mock(return_value=[make_job(1, title="AI Engineer")])):
+            with contextlib.redirect_stdout(buf):
+                run(dry_run=True)
 
         self.assertIn("AI Engineer", buf.getvalue())
 
@@ -87,7 +91,6 @@ class RunDryRunTest(unittest.TestCase):
 @mock.patch.dict("os.environ", {"TELEGRAM_BOT_TOKEN": "t", "TELEGRAM_CHAT_ID": "c"})
 @mock.patch("jobs.radar.notify.send_telegram")
 @mock.patch("jobs.radar.store.connect")
-@mock.patch("jobs.radar.greenhouse.fetch_jobs")
 @mock.patch("jobs.radar.config.load_config")
 class RunRealTest(unittest.TestCase):
     def setUp(self):
@@ -105,45 +108,64 @@ class RunRealTest(unittest.TestCase):
         conn.close()
         return row
 
-    def test_first_run_notifies_second_run_does_not(self, mock_load, mock_fetch, mock_connect, mock_send):
+    def test_first_run_notifies_second_run_does_not(self, mock_load, mock_connect, mock_send):
         mock_load.return_value = {"targets": TARGETS, "profile": PROFILE}
-        mock_fetch.return_value = [make_job(1)]
         mock_connect.side_effect = lambda: real_connect(self.db_path)
 
-        run(dry_run=False)
+        with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
+            run(dry_run=False)
         self.assertEqual(mock_send.call_count, 1)
 
         mock_send.reset_mock()
-        run(dry_run=False)
+        with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
+            run(dry_run=False)
         mock_send.assert_not_called()
 
-    def test_non_matching_job_not_stored_or_notified(self, mock_load, mock_fetch, mock_connect, mock_send):
+    def test_non_matching_job_not_stored_or_notified(self, mock_load, mock_connect, mock_send):
         mock_load.return_value = {"targets": TARGETS, "profile": PROFILE}
-        mock_fetch.return_value = [make_job(1, title="Sales Manager")]
         mock_connect.side_effect = lambda: real_connect(self.db_path)
 
-        run(dry_run=False)
+        with fetchers(greenhouse=mock.Mock(return_value=[make_job(1, title="Sales Manager")])):
+            run(dry_run=False)
 
         mock_send.assert_not_called()
         self.assertEqual(self._read_one("SELECT COUNT(*) FROM jobs")[0], 0)
 
-    def test_fetch_failure_is_logged_and_run_continues(self, mock_load, mock_fetch, mock_connect, mock_send):
+    def test_fetch_failure_is_logged_and_run_continues(self, mock_load, mock_connect, mock_send):
         mock_load.return_value = {"targets": TARGETS, "profile": PROFILE}
-        mock_fetch.side_effect = Exception("boom")
         mock_connect.side_effect = lambda: real_connect(self.db_path)
 
-        run(dry_run=False)  # must not raise
+        with fetchers(greenhouse=mock.Mock(side_effect=Exception("boom"))):
+            run(dry_run=False)  # must not raise
 
         self.assertIn("boom", self._read_one("SELECT errors FROM runs")[0])
 
-    def test_only_greenhouse_targets_with_a_board_are_fetched(self, mock_load, mock_fetch, mock_connect, mock_send):
+    def test_unsupported_source_or_missing_board_is_skipped(self, mock_load, mock_connect, mock_send):
         mock_load.return_value = {"targets": TARGETS, "profile": PROFILE}
-        mock_fetch.return_value = [make_job(1)]
         mock_connect.side_effect = lambda: real_connect(self.db_path)
+        mock_greenhouse = mock.Mock(return_value=[make_job(1)])
 
-        run(dry_run=False)
+        with fetchers(greenhouse=mock_greenhouse):
+            run(dry_run=False)
 
-        mock_fetch.assert_called_once_with("Acme", "acme")
+        mock_greenhouse.assert_called_once_with("Acme", "acme")
+
+    def test_lever_targets_are_fetched_alongside_greenhouse(self, mock_load, mock_connect, mock_send):
+        targets = [
+            {"name": "Acme", "source": "greenhouse", "board": "acme"},
+            {"name": "LeverCo", "source": "lever", "board": "leverco"},
+        ]
+        mock_load.return_value = {"targets": targets, "profile": PROFILE}
+        mock_connect.side_effect = lambda: real_connect(self.db_path)
+        mock_greenhouse = mock.Mock(return_value=[make_job(1, company="Acme")])
+        mock_lever = mock.Mock(return_value=[make_job(2, company="LeverCo")])
+
+        with fetchers(greenhouse=mock_greenhouse, lever=mock_lever):
+            run(dry_run=False)
+
+        mock_greenhouse.assert_called_once_with("Acme", "acme")
+        mock_lever.assert_called_once_with("LeverCo", "leverco")
+        self.assertEqual(mock_send.call_count, 2)
 
 
 if __name__ == "__main__":
