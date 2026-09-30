@@ -20,7 +20,7 @@ PROFILE = {
 TARGETS = [
     {"name": "Acme", "source": "greenhouse", "board": "acme"},
     {"name": "NoBoard", "source": "greenhouse", "board": ""},
-    {"name": "Unsupported", "source": "ashby", "board": "unsupported"},
+    {"name": "Unsupported", "source": "workday", "board": "unsupported"},
 ]
 
 

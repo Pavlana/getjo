@@ -5,11 +5,15 @@ import logging
 from datetime import datetime, timezone
 
 from core import config, notify, store
-from sources import greenhouse, lever
+from sources import ashby, greenhouse, lever
 
 logger = logging.getLogger(__name__)
 
-FETCHERS = {"greenhouse": greenhouse.fetch_jobs, "lever": lever.fetch_jobs}
+FETCHERS = {
+    "greenhouse": greenhouse.fetch_jobs,
+    "lever": lever.fetch_jobs,
+    "ashby": ashby.fetch_jobs,
+}
 
 
 def matches_filter(job: dict, filter_cfg: dict) -> bool:

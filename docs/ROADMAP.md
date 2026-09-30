@@ -45,10 +45,11 @@ Tick a box only when its acceptance criteria pass.
 ## Iteration 3 · More sources and resilience (Thu 1 Oct)
 
 - [x] `sources/lever.py`: `GET https://api.lever.co/v0/postings/{board}?mode=json`
-- [ ] `sources/ashby.py`: `GET https://api.ashbyhq.com/posting-api/job-board/{board}`
+- [x] `sources/ashby.py`: `GET https://api.ashbyhq.com/posting-api/job-board/{board}`
 - [ ] Shared HTTP helper: timeout, retries on 429/5xx with backoff, clear log line per failure
 - [ ] One broken board (wrong name, 404) is logged and skipped; the run still finishes and records the error in `runs`
 - [ ] README: what it does, how to run it, diagram, known limitations
+  - Diagram: build a proper architecture diagram (Claude Artifact, boxes-and-arrows, not just the Mermaid block in `design.md`) showing sources, core modules and external services; reuse it (e.g. as an exported image) in the README
 
 **Acceptance:** a run across all 15 companies completes, even with one deliberately wrong board name.
 **Concept:** partial failure, retries vs giving up, rate limits.
