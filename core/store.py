@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS jobs (
     url         TEXT NOT NULL,
     description TEXT,
     first_seen  TEXT NOT NULL,      -- ISO timestamp, set on insert
-    score       INTEGER             -- null until scored
+    score       INTEGER,            -- null until scored
+    score_attempts INTEGER NOT NULL DEFAULT 0  -- runs that tried to score this job
 );
 
 CREATE TABLE IF NOT EXISTS runs (
@@ -35,7 +36,20 @@ def connect(path: Path = DB_PATH) -> sqlite3.Connection:
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path)
     conn.executescript(SCHEMA)
+    _add_missing_columns(conn)
     return conn
+
+
+def _add_missing_columns(conn: sqlite3.Connection) -> None:
+    """Bring a database created by an older version up to date.
+
+    CREATE TABLE IF NOT EXISTS skips a table that already exists, so new columns
+    have to be added to it explicitly.
+    """
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(jobs)")}
+    if "score_attempts" not in columns:
+        conn.execute("ALTER TABLE jobs ADD COLUMN score_attempts INTEGER NOT NULL DEFAULT 0")
+        conn.commit()
 
 
 def upsert_job(conn: sqlite3.Connection, job: dict) -> bool:
@@ -50,6 +64,24 @@ def upsert_job(conn: sqlite3.Connection, job: dict) -> bool:
     )
     conn.commit()
     return cursor.rowcount == 1
+
+
+def get_scoring_state(conn: sqlite3.Connection, job_id: str) -> tuple[int | None, int]:
+    """Return (score, score_attempts) for a stored job; (None, 0) if it isn't stored."""
+    row = conn.execute("SELECT score, score_attempts FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    return (row[0], row[1]) if row else (None, 0)
+
+
+def add_score_attempt(conn: sqlite3.Connection, job_id: str) -> int:
+    """Count one more scoring try for a job. Returns the new count."""
+    conn.execute("UPDATE jobs SET score_attempts = score_attempts + 1 WHERE id = ?", (job_id,))
+    conn.commit()
+    return conn.execute("SELECT score_attempts FROM jobs WHERE id = ?", (job_id,)).fetchone()[0]
+
+
+def set_score(conn: sqlite3.Connection, job_id: str, score: int) -> None:
+    conn.execute("UPDATE jobs SET score = ? WHERE id = ?", (score, job_id))
+    conn.commit()
 
 
 def record_run(

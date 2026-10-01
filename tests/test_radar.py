@@ -5,6 +5,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+from core.config import ConfigError
+from core.llm import Completion
 from core.store import connect as real_connect
 from jobs.radar import matches_filter, run
 
@@ -14,7 +16,7 @@ PROFILE = {
         "title_exclude": ["intern", "director"],
         "locations": ["london", "remote"],
     },
-    "scoring": {"model": "x", "notify_threshold": 7},
+    "scoring": {"model": "claude-haiku-4-5", "notify_threshold": 7, "rubric": ["LLM work is core"]},
 }
 
 TARGETS = [
@@ -22,6 +24,8 @@ TARGETS = [
     {"name": "NoBoard", "source": "greenhouse", "board": ""},
     {"name": "Unsupported", "source": "workday", "board": "unsupported"},
 ]
+
+ENV = {"ANTHROPIC_API_KEY": "a", "TELEGRAM_BOT_TOKEN": "t", "TELEGRAM_CHAT_ID": "c"}
 
 
 def make_job(job_id, title="AI Engineer", location="London, UK", company="Acme"):
@@ -36,6 +40,16 @@ def make_job(job_id, title="AI Engineer", location="London, UK", company="Acme")
         "first_seen": "2026-09-30T09:00:00Z",
         "score": None,
     }
+
+
+def scored(score: int, cost: float = 0.004):
+    """What score_with_retry returns for a usable reply."""
+    return {"score": score, "reasons": ["fit"], "red_flags": []}, [Completion("{}", 100, 10, cost)]
+
+
+def unscored(cost: float = 0.004):
+    """What score_with_retry returns after two unusable replies."""
+    return None, [Completion("bad", 100, 10, cost), Completion("bad", 100, 10, cost)]
 
 
 def fetchers(**by_source: mock.Mock):
@@ -64,20 +78,22 @@ class MatchesFilterTest(unittest.TestCase):
         self.assertTrue(matches_filter(job, PROFILE["filter"]))
 
 
+@mock.patch("jobs.radar.score_with_retry")
 @mock.patch("jobs.radar.notify.send_telegram")
 @mock.patch("jobs.radar.store.connect")
 @mock.patch("jobs.radar.config.load_config")
 class RunDryRunTest(unittest.TestCase):
-    def test_dry_run_sends_and_stores_nothing(self, mock_load, mock_connect, mock_send):
+    def test_dry_run_scores_sends_and_stores_nothing(self, mock_load, mock_connect, mock_send, mock_score):
         mock_load.return_value = {"targets": TARGETS, "profile": PROFILE}
 
         with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
             run(dry_run=True)
 
+        mock_score.assert_not_called()
         mock_send.assert_not_called()
         mock_connect.assert_not_called()
 
-    def test_dry_run_prints_matches(self, mock_load, mock_connect, mock_send):
+    def test_dry_run_prints_matches(self, mock_load, mock_connect, mock_send, mock_score):
         mock_load.return_value = {"targets": TARGETS, "profile": PROFILE}
 
         buf = io.StringIO()
@@ -88,7 +104,9 @@ class RunDryRunTest(unittest.TestCase):
         self.assertIn("AI Engineer", buf.getvalue())
 
 
-@mock.patch.dict("os.environ", {"TELEGRAM_BOT_TOKEN": "t", "TELEGRAM_CHAT_ID": "c"})
+@mock.patch.dict("os.environ", ENV)
+@mock.patch("jobs.radar.load_cv", return_value="cv text")
+@mock.patch("jobs.radar.score_with_retry")
 @mock.patch("jobs.radar.notify.send_telegram")
 @mock.patch("jobs.radar.store.connect")
 @mock.patch("jobs.radar.config.load_config")
@@ -100,49 +118,171 @@ class RunRealTest(unittest.TestCase):
     def tearDown(self):
         self._tmp.cleanup()
 
-    def _read_one(self, sql: str):
+    def _wire(self, mock_load, mock_connect, targets=TARGETS):
+        mock_load.return_value = {"targets": targets, "profile": PROFILE}
+        mock_connect.side_effect = lambda: real_connect(self.db_path)
+
+    def _read_one(self, sql: str, params: tuple = ()):
         """Open a fresh connection to check what a run() call persisted — mirrors how a
         second real invocation of the script would see the database."""
         conn = real_connect(self.db_path)
-        row = conn.execute(sql).fetchone()
+        row = conn.execute(sql, params).fetchone()
         conn.close()
         return row
 
-    def test_first_run_notifies_second_run_does_not(self, mock_load, mock_connect, mock_send):
-        mock_load.return_value = {"targets": TARGETS, "profile": PROFILE}
-        mock_connect.side_effect = lambda: real_connect(self.db_path)
+    def _score_of(self, job_id: str):
+        return self._read_one("SELECT score FROM jobs WHERE id = ?", (job_id,))[0]
+
+    def test_first_run_notifies_second_run_does_not(self, mock_load, mock_connect, mock_send, mock_score, _):
+        self._wire(mock_load, mock_connect)
+        mock_score.return_value = scored(8)
 
         with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
             run(dry_run=False)
         self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(self._score_of("greenhouse:Acme:1"), 8)
 
         mock_send.reset_mock()
+        mock_score.reset_mock()
+        with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
+            run(dry_run=False)
+        mock_score.assert_not_called()
+        mock_send.assert_not_called()
+
+    def test_below_threshold_is_stored_but_not_notified(self, mock_load, mock_connect, mock_send, mock_score, _):
+        self._wire(mock_load, mock_connect)
+        mock_score.return_value = scored(5)
+
+        with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
+            run(dry_run=False)
+
+        mock_send.assert_not_called()
+        self.assertEqual(self._score_of("greenhouse:Acme:1"), 5)
+
+    def test_unscored_job_stays_null_and_is_retried_next_run(
+        self, mock_load, mock_connect, mock_send, mock_score, _
+    ):
+        self._wire(mock_load, mock_connect)
+        mock_score.side_effect = [unscored(), scored(8)]
+
         with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
             run(dry_run=False)
         mock_send.assert_not_called()
+        self.assertIsNone(self._score_of("greenhouse:Acme:1"))
 
-    def test_non_matching_job_not_stored_or_notified(self, mock_load, mock_connect, mock_send):
-        mock_load.return_value = {"targets": TARGETS, "profile": PROFILE}
-        mock_connect.side_effect = lambda: real_connect(self.db_path)
+        with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
+            run(dry_run=False)
+        self.assertEqual(mock_score.call_count, 2)
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(self._score_of("greenhouse:Acme:1"), 8)
+
+    def test_scoring_error_is_recorded_and_run_continues(
+        self, mock_load, mock_connect, mock_send, mock_score, _
+    ):
+        self._wire(mock_load, mock_connect)
+        mock_score.side_effect = [Exception("api down"), scored(8)]
+
+        with fetchers(greenhouse=mock.Mock(return_value=[make_job(1), make_job(2)])):
+            run(dry_run=False)  # must not raise
+
+        self.assertIn("api down", self._read_one("SELECT errors FROM runs")[0])
+        self.assertIsNone(self._score_of("greenhouse:Acme:1"))
+        self.assertEqual(self._score_of("greenhouse:Acme:2"), 8)
+        self.assertEqual(mock_send.call_count, 1)
+
+    def test_notify_failure_leaves_job_unscored_for_retry(
+        self, mock_load, mock_connect, mock_send, mock_score, _
+    ):
+        self._wire(mock_load, mock_connect)
+        mock_score.return_value = scored(9)
+        mock_send.side_effect = Exception("telegram down")
+
+        with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
+            run(dry_run=False)  # must not raise
+
+        self.assertIsNone(self._score_of("greenhouse:Acme:1"))
+        self.assertIn("telegram down", self._read_one("SELECT errors FROM runs")[0])
+        self.assertEqual(self._read_one("SELECT notified FROM runs")[0], 0)
+
+    def test_cost_includes_retries_and_is_logged(self, mock_load, mock_connect, mock_send, mock_score, _):
+        self._wire(mock_load, mock_connect)
+        mock_score.side_effect = [scored(8, cost=0.004), unscored(cost=0.004)]
+
+        with fetchers(greenhouse=mock.Mock(return_value=[make_job(1), make_job(2)])):
+            with self.assertLogs("jobs.radar", level="INFO") as logs:
+                run(dry_run=False)
+
+        summary = logs.output[-1]
+        self.assertIn("scored=1 failed=1 gave_up=0 notified=1", summary)
+        self.assertIn("cost=$0.0120", summary)
+
+    def test_gives_up_after_three_failed_runs(self, mock_load, mock_connect, mock_send, mock_score, _):
+        self._wire(mock_load, mock_connect)
+        mock_score.return_value = unscored()
+
+        for _run in range(3):
+            with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
+                with self.assertLogs("jobs.radar", level="INFO") as logs:
+                    run(dry_run=False)
+        self.assertTrue(any("giving up on greenhouse:Acme:1 after 3 tries" in line for line in logs.output))
+        self.assertIn("gave_up=1", logs.output[-1])
+
+        with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
+            run(dry_run=False)
+
+        self.assertEqual(mock_score.call_count, 3)
+        self.assertIsNone(self._score_of("greenhouse:Acme:1"))
+        self.assertEqual(self._read_one("SELECT score_attempts FROM jobs")[0], 3)
+
+    def test_failed_send_counts_as_a_try(self, mock_load, mock_connect, mock_send, mock_score, _):
+        self._wire(mock_load, mock_connect)
+        mock_score.return_value = scored(9)
+        mock_send.side_effect = Exception("message rejected")
+
+        for _run in range(4):
+            with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
+                run(dry_run=False)
+
+        self.assertEqual(mock_score.call_count, 3)
+        self.assertEqual(mock_send.call_count, 3)
+        self.assertIsNone(self._score_of("greenhouse:Acme:1"))
+
+    def test_successful_score_on_last_try_is_kept(self, mock_load, mock_connect, mock_send, mock_score, _):
+        self._wire(mock_load, mock_connect)
+        mock_score.side_effect = [unscored(), unscored(), scored(8)]
+
+        for _run in range(3):
+            with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
+                run(dry_run=False)
+
+        self.assertEqual(self._score_of("greenhouse:Acme:1"), 8)
+        self.assertEqual(mock_send.call_count, 1)
+
+    def test_non_matching_job_not_stored_scored_or_notified(
+        self, mock_load, mock_connect, mock_send, mock_score, _
+    ):
+        self._wire(mock_load, mock_connect)
 
         with fetchers(greenhouse=mock.Mock(return_value=[make_job(1, title="Sales Manager")])):
             run(dry_run=False)
 
+        mock_score.assert_not_called()
         mock_send.assert_not_called()
         self.assertEqual(self._read_one("SELECT COUNT(*) FROM jobs")[0], 0)
 
-    def test_fetch_failure_is_logged_and_run_continues(self, mock_load, mock_connect, mock_send):
-        mock_load.return_value = {"targets": TARGETS, "profile": PROFILE}
-        mock_connect.side_effect = lambda: real_connect(self.db_path)
+    def test_fetch_failure_is_logged_and_run_continues(self, mock_load, mock_connect, mock_send, mock_score, _):
+        self._wire(mock_load, mock_connect)
 
         with fetchers(greenhouse=mock.Mock(side_effect=Exception("boom"))):
             run(dry_run=False)  # must not raise
 
         self.assertIn("boom", self._read_one("SELECT errors FROM runs")[0])
 
-    def test_unsupported_source_or_missing_board_is_skipped(self, mock_load, mock_connect, mock_send):
-        mock_load.return_value = {"targets": TARGETS, "profile": PROFILE}
-        mock_connect.side_effect = lambda: real_connect(self.db_path)
+    def test_unsupported_source_or_missing_board_is_skipped(
+        self, mock_load, mock_connect, mock_send, mock_score, _
+    ):
+        self._wire(mock_load, mock_connect)
+        mock_score.return_value = scored(8)
         mock_greenhouse = mock.Mock(return_value=[make_job(1)])
 
         with fetchers(greenhouse=mock_greenhouse):
@@ -150,13 +290,15 @@ class RunRealTest(unittest.TestCase):
 
         mock_greenhouse.assert_called_once_with("Acme", "acme")
 
-    def test_lever_targets_are_fetched_alongside_greenhouse(self, mock_load, mock_connect, mock_send):
+    def test_lever_targets_are_fetched_alongside_greenhouse(
+        self, mock_load, mock_connect, mock_send, mock_score, _
+    ):
         targets = [
             {"name": "Acme", "source": "greenhouse", "board": "acme"},
             {"name": "LeverCo", "source": "lever", "board": "leverco"},
         ]
-        mock_load.return_value = {"targets": targets, "profile": PROFILE}
-        mock_connect.side_effect = lambda: real_connect(self.db_path)
+        self._wire(mock_load, mock_connect, targets)
+        mock_score.return_value = scored(8)
         mock_greenhouse = mock.Mock(return_value=[make_job(1, company="Acme")])
         mock_lever = mock.Mock(return_value=[make_job(2, company="LeverCo")])
 
@@ -166,6 +308,15 @@ class RunRealTest(unittest.TestCase):
         mock_greenhouse.assert_called_once_with("Acme", "acme")
         mock_lever.assert_called_once_with("LeverCo", "leverco")
         self.assertEqual(mock_send.call_count, 2)
+
+    def test_real_run_requires_anthropic_key(self, mock_load, mock_connect, mock_send, mock_score, _):
+        self._wire(mock_load, mock_connect)
+        env_without_key = {k: v for k, v in ENV.items() if k != "ANTHROPIC_API_KEY"}
+
+        with mock.patch.dict("os.environ", env_without_key, clear=True):
+            with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
+                with self.assertRaises(ConfigError):
+                    run(dry_run=False)
 
 
 if __name__ == "__main__":

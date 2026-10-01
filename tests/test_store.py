@@ -1,8 +1,9 @@
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
 
-from core.store import connect, record_run, upsert_job
+from core.store import add_score_attempt, connect, get_scoring_state, record_run, set_score, upsert_job
 
 JOB = {
     "id": "greenhouse:Example Co:123",
@@ -41,6 +42,46 @@ class StoreTest(unittest.TestCase):
         other = {**JOB, "id": "greenhouse:Example Co:456"}
         self.assertTrue(upsert_job(self.conn, JOB))
         self.assertTrue(upsert_job(self.conn, other))
+
+    def test_new_job_has_no_score_and_no_attempts(self):
+        upsert_job(self.conn, JOB)
+        self.assertEqual(get_scoring_state(self.conn, JOB["id"]), (None, 0))
+
+    def test_set_score(self):
+        upsert_job(self.conn, JOB)
+        set_score(self.conn, JOB["id"], 8)
+        self.assertEqual(get_scoring_state(self.conn, JOB["id"])[0], 8)
+
+    def test_add_score_attempt_counts_up(self):
+        upsert_job(self.conn, JOB)
+        self.assertEqual(add_score_attempt(self.conn, JOB["id"]), 1)
+        self.assertEqual(add_score_attempt(self.conn, JOB["id"]), 2)
+        self.assertEqual(get_scoring_state(self.conn, JOB["id"]), (None, 2))
+
+    def test_unknown_job_state(self):
+        self.assertEqual(get_scoring_state(self.conn, "greenhouse:Nobody:0"), (None, 0))
+
+    def test_old_database_gets_score_attempts_column(self):
+        old_path = Path(self._tmp.name) / "old.db"
+        old = sqlite3.connect(old_path)
+        old.execute(
+            "CREATE TABLE jobs (id TEXT PRIMARY KEY, source TEXT NOT NULL, company TEXT NOT NULL, "
+            "title TEXT NOT NULL, location TEXT, url TEXT NOT NULL, description TEXT, "
+            "first_seen TEXT NOT NULL, score INTEGER)"
+        )
+        old.execute(
+            "INSERT INTO jobs VALUES (:id, :source, :company, :title, :location, :url, :description, "
+            ":first_seen, NULL)",
+            JOB,
+        )
+        old.commit()
+        old.close()
+
+        conn = connect(old_path)
+        state = get_scoring_state(conn, JOB["id"])
+        conn.close()
+
+        self.assertEqual(state, (None, 0))
 
     def test_record_run(self):
         record_run(
