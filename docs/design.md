@@ -53,6 +53,8 @@ One line each: date, decision, reason.
 - 2026-09-30: `core/llm.complete()` returns a `Completion` dataclass (`text`, `input_tokens`, `output_tokens`, `cost`), not just a string — `jobs/radar.py` needs to sum `cost` across every scoring call in a run to print a total, which the roadmap's acceptance criterion for this iteration requires.
 - 2026-09-30: `core/llm.py` has its own private POST-with-retry, not a shared one with `notify.py` — same reasoning as the GET helper: wait for the duplication to be real (a third POST caller) before extracting it, rather than guessing at the shared shape from two.
 - 2026-09-30: Per-model $/token pricing lives in a small `PRICING` dict in `core/llm.py`, keyed by exact model ID. An unpriced model (e.g. after a model swap without updating this table) makes `cost` `None` rather than silently wrong — a missing entry is loud, not a guess.
+- 2026-09-30: Scoring prompt puts the trusted CV and rubric in `system` and the untrusted job posting in `user`, inside `<job>` tags, with an instruction to treat it as data, not instructions (prompt-injection hygiene). The JSON asks for `reasons` before `score` so the model states evidence before picking a number. Reasons and red flags aren't stored; only `score` goes in the database.
+- 2026-09-30: First real scoring call (Haiku 4.5): ~2,600 input / ~250 output tokens, $0.0038 per job. The reply came wrapped in markdown fences despite the prompt saying not to, so the parser must tolerate them.
 
 ## Known limitations
 

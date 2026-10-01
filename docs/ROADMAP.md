@@ -59,7 +59,7 @@ Tick a box only when its acceptance criteria pass.
 ## Iteration 4 · Scoring against the CV (week 2)
 
 - [x] `core/llm.py`: `complete(system, user, max_tokens)` via POST `/v1/messages`; logs input/output tokens and cost per call
-- [ ] Scoring prompt: job description + `cv.md` + rubric from `profile.toml` → JSON `{score: 1-10, reasons: [..], red_flags: [..]}`
+- [x] Scoring prompt: job description + `cv.md` + rubric from `profile.toml` → JSON `{score: 1-10, reasons: [..], red_flags: [..]}`
 - [ ] Validate the JSON in code; on invalid output, retry once, then store the job as `unscored`
 - [ ] Only jobs that pass the keyword filter get scored (cost control); only score ≥ threshold goes to Telegram
 - [ ] Telegram message: title, company, location, score, top reason, link
