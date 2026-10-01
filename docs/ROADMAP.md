@@ -62,7 +62,7 @@ Tick a box only when its acceptance criteria pass.
 - [x] Scoring prompt: job description + `cv.md` + rubric from `profile.toml` → JSON `{score: 1-10, reasons: [..], red_flags: [..]}`
 - [x] Validate the JSON in code; on invalid output, retry once, then store the job as `unscored`
 - [x] Only jobs that pass the keyword filter get scored (cost control); only score ≥ threshold goes to Telegram
-- [ ] Telegram message: title, company, location, score, top reason, link
+- [x] Telegram message: title, company, location, score, top reason, link
 
 **Acceptance:** a run scores new jobs, and cost per run is printed at the end.
 **Concept:** structured output, validating model output, cost control by filtering first.

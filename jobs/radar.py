@@ -68,8 +68,10 @@ def _fetch_matches(targets: list[dict], filter_cfg: dict) -> tuple[list[dict], l
     return matches, errors, fetched
 
 
-def _message(job: dict) -> str:
-    return f"{job['title']} — {job['company']} ({job['location']})\n{job['url']}"
+def _message(job: dict, result: dict) -> str:
+    # Plain text: Telegram's Markdown/HTML modes reject a title containing a stray _ or *.
+    place = f"{job['company']} · {job['location']}" if job["location"] else job["company"]
+    return f"{result['score']}/10 · {job['title']}\n{place}\n{result['reasons'][0]}\n{job['url']}"
 
 
 def _score_one(
@@ -103,7 +105,7 @@ def _score_one(
     if result["score"] >= scoring_cfg["notify_threshold"]:
         try:
             notify.send_telegram(
-                _message(job), token=env["TELEGRAM_BOT_TOKEN"], chat_id=env["TELEGRAM_CHAT_ID"]
+                _message(job, result), token=env["TELEGRAM_BOT_TOKEN"], chat_id=env["TELEGRAM_CHAT_ID"]
             )
         except Exception as e:
             logger.warning("notify failed for %s: %s", job["id"], e)

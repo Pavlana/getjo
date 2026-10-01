@@ -8,7 +8,7 @@ from unittest import mock
 from core.config import ConfigError
 from core.llm import Completion
 from core.store import connect as real_connect
-from jobs.radar import matches_filter, run
+from jobs.radar import _message, matches_filter, run
 
 PROFILE = {
     "filter": {
@@ -78,6 +78,20 @@ class MatchesFilterTest(unittest.TestCase):
         self.assertTrue(matches_filter(job, PROFILE["filter"]))
 
 
+class MessageTest(unittest.TestCase):
+    RESULT = {"score": 8, "reasons": ["Hands-on RAG in Python", "London hybrid"], "red_flags": ["visa"]}
+
+    def test_has_score_title_company_location_top_reason_and_link(self):
+        self.assertEqual(
+            _message(make_job(1), self.RESULT),
+            "8/10 · AI Engineer\nAcme · London, UK\nHands-on RAG in Python\nhttps://example.com/1",
+        )
+
+    def test_missing_location_shows_company_only(self):
+        lines = _message(make_job(1, location=""), self.RESULT).splitlines()
+        self.assertEqual(lines[1], "Acme")
+
+
 @mock.patch("jobs.radar.score_with_retry")
 @mock.patch("jobs.radar.notify.send_telegram")
 @mock.patch("jobs.radar.store.connect")
@@ -140,6 +154,7 @@ class RunRealTest(unittest.TestCase):
         with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
             run(dry_run=False)
         self.assertEqual(mock_send.call_count, 1)
+        self.assertTrue(mock_send.call_args[0][0].startswith("8/10 · AI Engineer\n"))
         self.assertEqual(self._score_of("greenhouse:Acme:1"), 8)
 
         mock_send.reset_mock()
