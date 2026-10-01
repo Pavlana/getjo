@@ -6,8 +6,12 @@
 title_include = ["engineer", "architect"]
 # ...and none of these
 title_exclude = ["intern", "graduate", "director"]
-# A location must contain at least one of these
-locations = ["london", "remote"]
+# Location terms match whole words, case-insensitive ("us" won't match "Australia").
+# On-site or hybrid roles: the location must name one of these.
+locations = ["london"]
+# Remote roles: the location must say "remote" and name one of these.
+# Leave empty to skip remote roles. US boards usually name the state ("Remote - Texas").
+remote_places = ["united states", "us", "california", "new york", "europe", "united kingdom"]
 
 [scoring]
 model = "claude-haiku-4-5"            # cheap model for scoring; change and compare with evals

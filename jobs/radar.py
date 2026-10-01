@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import re
 import sqlite3
 import sys
 from dataclasses import dataclass
@@ -32,8 +33,14 @@ class Tally:
     unpriced_calls: int = 0  # calls whose model isn't in core/llm.PRICING
 
 
+def _names_any(text: str, terms: list[str]) -> bool:
+    """True if text contains any term as a whole word or phrase, so "us" doesn't match "australia"."""
+    return any(re.search(rf"(?<![a-z0-9]){re.escape(term.lower())}(?![a-z0-9])", text) for term in terms)
+
+
 def matches_filter(job: dict, filter_cfg: dict) -> bool:
-    """Title must hit an include keyword and no exclude keyword; location must hit one keyword."""
+    """Title must hit an include keyword and no exclude keyword. Location must name one of
+    `locations`, or be remote and name one of `remote_places`."""
     title = job["title"].lower()
     location = (job["location"] or "").lower()
 
@@ -41,9 +48,9 @@ def matches_filter(job: dict, filter_cfg: dict) -> bool:
         return False
     if any(kw.lower() in title for kw in filter_cfg["title_exclude"]):
         return False
-    if not any(loc.lower() in location for loc in filter_cfg["locations"]):
-        return False
-    return True
+    if _names_any(location, filter_cfg["locations"]):
+        return True
+    return "remote" in location and _names_any(location, filter_cfg.get("remote_places", []))
 
 
 def _fetch_matches(targets: list[dict], filter_cfg: dict) -> tuple[list[dict], list[str], int]:

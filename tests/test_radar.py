@@ -14,7 +14,8 @@ PROFILE = {
     "filter": {
         "title_include": ["ai engineer", "applied ai"],
         "title_exclude": ["intern", "director"],
-        "locations": ["london", "remote"],
+        "locations": ["london"],
+        "remote_places": ["united states", "us", "texas", "new mexico", "united kingdom", "denmark"],
     },
     "scoring": {"model": "claude-haiku-4-5", "notify_threshold": 7, "rubric": ["LLM work is core"]},
 }
@@ -76,6 +77,39 @@ class MatchesFilterTest(unittest.TestCase):
     def test_case_insensitive(self):
         job = make_job(1, title="AI ENGINEER", location="LONDON")
         self.assertTrue(matches_filter(job, PROFILE["filter"]))
+
+    def _location_passes(self, location: str) -> bool:
+        return matches_filter(make_job(1, location=location), PROFILE["filter"])
+
+    def test_london_passes_whatever_else_is_listed(self):
+        self.assertTrue(self._location_passes("London, UK"))
+        self.assertTrue(self._location_passes("Remote - India; London"))
+
+    def test_location_terms_match_whole_words_only(self):
+        self.assertFalse(self._location_passes("Londonderry, Northern Ireland"))
+        self.assertFalse(self._location_passes("Remote - Australia"))  # contains "us"
+        self.assertFalse(self._location_passes("Remote - Russia"))  # contains "us"
+        self.assertFalse(self._location_passes("MX-Mexico-Remote"))  # "new mexico" is a US state
+
+    def test_remote_in_listed_place_passes(self):
+        self.assertTrue(self._location_passes("Remote - Texas"))
+        self.assertTrue(self._location_passes("Remote, US"))
+        self.assertTrue(self._location_passes("US-IL-Remote"))
+        self.assertTrue(self._location_passes("Remote - United Kingdom"))
+        self.assertTrue(self._location_passes("Finland; Remote - Denmark; Stockholm, Sweden"))
+
+    def test_remote_elsewhere_fails(self):
+        self.assertFalse(self._location_passes("Remote - India"))
+        self.assertFalse(self._location_passes("Bangalore - Remote"))
+        self.assertFalse(self._location_passes("Remote"))
+
+    def test_listed_place_without_remote_fails(self):
+        self.assertFalse(self._location_passes("Dallas, Texas"))
+        self.assertFalse(self._location_passes("Manchester, United Kingdom"))
+
+    def test_remote_roles_rejected_when_remote_places_not_configured(self):
+        filter_cfg = {k: v for k, v in PROFILE["filter"].items() if k != "remote_places"}
+        self.assertFalse(matches_filter(make_job(1, location="Remote - Texas"), filter_cfg))
 
 
 class MessageTest(unittest.TestCase):
