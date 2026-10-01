@@ -4,7 +4,8 @@ from pathlib import Path
 from unittest import mock
 
 from core.config import ConfigError
-from jobs.score import MAX_TOKENS, build_prompt, load_cv, score_job
+from core.llm import Completion
+from jobs.score import MAX_TOKENS, build_prompt, load_cv, parse_score, score_job, score_with_retry
 
 JOB = {
     "id": "greenhouse:Acme:1",
@@ -60,6 +61,96 @@ class ScoreJobTest(unittest.TestCase):
         mock_complete.assert_called_once_with(
             system, user, MAX_TOKENS, model="claude-haiku-4-5", api_key="k"
         )
+
+
+VALID = '{"reasons": ["Strong RAG fit"], "red_flags": [], "score": 8}'
+EXPECTED = {"score": 8, "reasons": ["Strong RAG fit"], "red_flags": []}
+
+
+class ParseScoreTest(unittest.TestCase):
+    def test_plain_json(self):
+        self.assertEqual(parse_score(VALID), EXPECTED)
+
+    def test_json_fenced_with_language(self):
+        # the shape of the first real reply from Haiku 4.5
+        self.assertEqual(parse_score(f"```json\n{VALID}\n```"), EXPECTED)
+
+    def test_json_fenced_without_language(self):
+        self.assertEqual(parse_score(f"```\n{VALID}\n```"), EXPECTED)
+
+    def test_surrounding_whitespace(self):
+        self.assertEqual(parse_score(f"\n  {VALID}  \n"), EXPECTED)
+
+    def test_not_json(self):
+        self.assertIsNone(parse_score("I'd rate this an 8 out of 10."))
+
+    def test_text_around_json_is_rejected(self):
+        self.assertIsNone(parse_score(f"Here is my assessment: {VALID}"))
+
+    def test_json_list_instead_of_object(self):
+        self.assertIsNone(parse_score("[8]"))
+
+    def test_score_out_of_range(self):
+        self.assertIsNone(parse_score('{"reasons": ["x"], "red_flags": [], "score": 11}'))
+        self.assertIsNone(parse_score('{"reasons": ["x"], "red_flags": [], "score": 0}'))
+
+    def test_score_wrong_type(self):
+        self.assertIsNone(parse_score('{"reasons": ["x"], "red_flags": [], "score": "8"}'))
+        self.assertIsNone(parse_score('{"reasons": ["x"], "red_flags": [], "score": 7.5}'))
+        self.assertIsNone(parse_score('{"reasons": ["x"], "red_flags": [], "score": true}'))
+
+    def test_missing_key(self):
+        self.assertIsNone(parse_score('{"reasons": ["x"], "score": 8}'))
+        self.assertIsNone(parse_score('{"red_flags": [], "score": 8}'))
+
+    def test_empty_reasons_rejected(self):
+        self.assertIsNone(parse_score('{"reasons": [], "red_flags": [], "score": 8}'))
+
+    def test_non_string_list_items_rejected(self):
+        self.assertIsNone(parse_score('{"reasons": [1], "red_flags": [], "score": 8}'))
+        self.assertIsNone(parse_score('{"reasons": ["x"], "red_flags": [null], "score": 8}'))
+
+    def test_extra_keys_dropped(self):
+        text = '{"reasons": ["x"], "red_flags": [], "score": 8, "confidence": "high"}'
+        self.assertEqual(parse_score(text), {"score": 8, "reasons": ["x"], "red_flags": []})
+
+
+def completion(text: str) -> Completion:
+    return Completion(text=text, input_tokens=100, output_tokens=10, cost=0.001)
+
+
+@mock.patch("jobs.score.score_job")
+class ScoreWithRetryTest(unittest.TestCase):
+    def test_valid_first_reply_makes_one_call(self, mock_score_job):
+        mock_score_job.return_value = completion(VALID)
+
+        result, completions = score_with_retry(JOB, CV, RUBRIC, model="m", api_key="k")
+
+        self.assertEqual(result, EXPECTED)
+        self.assertEqual(len(completions), 1)
+
+    def test_invalid_then_valid_retries_once(self, mock_score_job):
+        mock_score_job.side_effect = [completion("not json"), completion(VALID)]
+
+        result, completions = score_with_retry(JOB, CV, RUBRIC, model="m", api_key="k")
+
+        self.assertEqual(result, EXPECTED)
+        self.assertEqual(len(completions), 2)
+
+    def test_invalid_twice_is_unscored(self, mock_score_job):
+        mock_score_job.return_value = completion("not json")
+
+        result, completions = score_with_retry(JOB, CV, RUBRIC, model="m", api_key="k")
+
+        self.assertIsNone(result)
+        self.assertEqual(mock_score_job.call_count, 2)
+        self.assertEqual(len(completions), 2)
+
+    def test_api_errors_propagate(self, mock_score_job):
+        mock_score_job.side_effect = RuntimeError("api down")
+
+        with self.assertRaises(RuntimeError):
+            score_with_retry(JOB, CV, RUBRIC, model="m", api_key="k")
 
 
 class LoadCvTest(unittest.TestCase):

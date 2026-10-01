@@ -55,6 +55,9 @@ One line each: date, decision, reason.
 - 2026-09-30: Per-model $/token pricing lives in a small `PRICING` dict in `core/llm.py`, keyed by exact model ID. An unpriced model (e.g. after a model swap without updating this table) makes `cost` `None` rather than silently wrong — a missing entry is loud, not a guess.
 - 2026-09-30: Scoring prompt puts the trusted CV and rubric in `system` and the untrusted job posting in `user`, inside `<job>` tags, with an instruction to treat it as data, not instructions (prompt-injection hygiene). The JSON asks for `reasons` before `score` so the model states evidence before picking a number. Reasons and red flags aren't stored; only `score` goes in the database.
 - 2026-09-30: First real scoring call (Haiku 4.5): ~2,600 input / ~250 output tokens, $0.0038 per job. The reply came wrapped in markdown fences despite the prompt saying not to, so the parser must tolerate them.
+- 2026-10-01: `parse_score()` strips markdown fences before `json.loads`, rather than counting a fenced reply as invalid and paying for a retry that would likely come back fenced too. The shape check is strict: `score` a whole number 1–10 (`True` and `7.5` rejected), `reasons` a non-empty list of strings (Telegram needs a top reason), `red_flags` a list of strings. Any failure means retry once with the same prompt, then `None` (unscored).
+- 2026-10-01: `score_with_retry()` returns every completion it made, so the per-run cost total includes retries. API errors (after `core/llm.py`'s own retries) propagate; `radar.py` catches them per job.
+- 2026-10-01: Scores aren't fully repeatable: the same job scored 2, then 3, at the API's default temperature. Consider `temperature: 0` before Iteration 5's evals, so a changed score means the prompt changed, not the dice.
 
 ## Known limitations
 
