@@ -2,10 +2,10 @@
 # the radar reads it on every run.
 
 [filter]
-# A title must contain at least one of these (case-insensitive)
+# A title must name at least one of these, as whole words, case-insensitive ("rag" won't match "coverage")
 title_include = ["engineer", "architect"]
 # ...and none of these
-title_exclude = ["intern", "graduate", "director"]
+title_exclude = ["intern", "internship", "graduate", "director"]
 # Location terms match whole words, case-insensitive ("us" won't match "Australia").
 # On-site or hybrid roles: the location must name one of these.
 locations = ["london"]

@@ -88,6 +88,12 @@ class MatchesFilterTest(unittest.TestCase):
         job = make_job(1, location="Berlin, Germany")
         self.assertFalse(matches_filter(job, PROFILE["filter"]))
 
+    def test_title_keywords_match_whole_words_only(self):
+        rag = {**PROFILE["filter"], "title_include": ["rag"]}
+        self.assertTrue(matches_filter(make_job(1, title="RAG Engineer"), rag))
+        self.assertFalse(matches_filter(make_job(1, title="Associate Counsel (mat leave coverage)"), rag))
+        self.assertTrue(matches_filter(make_job(1, title="AI Engineer, International Payments"), PROFILE["filter"]))
+
     def test_case_insensitive(self):
         job = make_job(1, title="AI ENGINEER", location="LONDON")
         self.assertTrue(matches_filter(job, PROFILE["filter"]))

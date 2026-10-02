@@ -48,11 +48,10 @@ def _names_any(text: str, terms: list[str]) -> bool:
 
 
 def title_matches(title: str, filter_cfg: dict) -> bool:
-    """Title hits an include keyword and no exclude keyword."""
+    """Title names an include keyword and no exclude keyword, as whole words: "rag" mustn't match
+    "coverage", and excluding "intern" mustn't drop "International ..." titles."""
     title = title.lower()
-    return any(kw.lower() in title for kw in filter_cfg["title_include"]) and not any(
-        kw.lower() in title for kw in filter_cfg["title_exclude"]
-    )
+    return _names_any(title, filter_cfg["title_include"]) and not _names_any(title, filter_cfg["title_exclude"])
 
 
 def matches_filter(job: dict, filter_cfg: dict) -> bool:
