@@ -84,15 +84,24 @@ Tick a box only when its acceptance criteria pass.
 
 - [ ] Run automatically once a day (cron/launchd on the laptop, or GitHub Actions with secrets)
 - [x] A daily summary message even when there are no new jobs, so silence means broken, not empty
-- [ ] Evals run in GitHub Actions on every push; the build fails below the agreed threshold
 
 **Acceptance:** two unattended runs in a row, visible in the `runs` table.
-**Concept:** scheduling, observability, evals as a CI gate.
+**Concept:** scheduling, observability.
+
+---
+
+## Iteration 7 · Wider sourcing
+
+- [ ] Investigation, no code: for each target company skipped today (no supported board), find which job board it uses; check which job search services have a usable API for UK roles (full descriptions, rate limits, terms). Output: one table and a recommendation (new board adapters, a search-based source, or both)
+
+**Acceptance:** the table covers every skipped company and each candidate search service, and the recommendation names the next coding tasks.
+**Concept:** coverage vs effort; choosing sources by what they add, not by what is easiest to build.
 
 ---
 
 ## Later (only after applications have started)
 
+- Evals in GitHub Actions on every push; the build fails below an agreed threshold. CI has no access to the private CV, profile or labelled cases, so it would use a committed set with a made-up candidate (CV, profile, ~10 cases with job text inline): it guards the code (prompt, parsing, dealbreaker checks), while the local eval keeps judging fit. Concept: evals as a CI gate
 - Proton inbox module (IMAP via Bridge): threads waiting for my reply, drafts to the Drafts folder
 - Application Pack: job + master CV → tailored bullets checked against the CV for invented claims
 - Hand-written tool-use loop over radar + inbox ("what needs me today?")
