@@ -9,6 +9,7 @@ Status: in development. See `docs/ROADMAP.md` for progress, `docs/design.md` for
 ## What it does
 
 - Fetches open jobs from each configured company's Greenhouse, Lever, Ashby, Workday, SmartRecruiters or Workable board.
+- Optionally searches Reed.co.uk by keyword across all employers (`[reed]` in `profile.toml`, `REED_API_KEY`), skipping employers already fetched from their own board.
 - Filters by title keywords and location: on-site roles in the listed locations, and remote roles only in the listed regions (`config/profile.toml`).
 - Stores matches in SQLite, deduplicated by `source:company:job_id`.
 - Scores each new match from 1 to 10 against the CV, a rubric of preferences and a list of dealbreakers. A dealbreaker only counts when the model quotes the posting stating it, and the code then caps the score at 3.
@@ -81,6 +82,7 @@ A run missed while the Mac is asleep starts on wake; a run missed while it is sh
 
 - Supported boards: Greenhouse, Lever, Ashby, Workday, SmartRecruiters and Workable. Companies on other systems (e.g. Avature, or a custom careers site) are skipped.
 - Workday has no documented public API: the adapter uses the endpoints its own careers pages call, so a change on Workday's side shows up as a fetch error for those companies.
+- Reed: only direct-employer ads by default (agency ads often hide the employer, so duplicates can't be detected). A job is recognised as a duplicate of a target's own posting by employer name only.
 - The schedule runs on one Mac and depends on it being on. Every run ends with a summary message in Telegram, so a missed run shows up only as a missing message; nothing outside the Mac raises an alert.
 - Scores cluster around 8 for any reasonable fit, so strong and borderline matches are hard to separate with the threshold alone.
 - Description quality varies by source: Greenhouse provides the full posting; Lever and Ashby provide a shorter summary without their bullet-list sections.

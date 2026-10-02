@@ -21,7 +21,7 @@ class GetWithRetryTest(unittest.TestCase):
     def test_success_returns_response_with_timeout(self, mock_get):
         mock_get.return_value = make_response(200)
         response = get_with_retry("https://example.com/jobs", label="test")
-        mock_get.assert_called_once_with("https://example.com/jobs", timeout=10)
+        mock_get.assert_called_once_with("https://example.com/jobs", timeout=10, auth=None)
         self.assertEqual(response.status_code, 200)
 
     @mock.patch("core.http.time.sleep")

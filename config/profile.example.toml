@@ -36,3 +36,11 @@ candidate_facts = [
 dealbreakers = [
   "Requires speaking a language other than English",
 ]
+
+# Optional: search Reed.co.uk across all employers (needs REED_API_KEY). Employers that are already
+# targets with a readable board are skipped, so a job isn't found twice.
+[reed]
+keywords = ["AI engineer", "applied AI", "LLM engineer", "forward deployed engineer"]
+location = "London"            # Reed searches within 10 miles of this place
+direct_employers_only = true   # false adds recruitment-agency ads (often without the employer's name)
+exclude_employers = ["Example Training Ltd"]

@@ -13,12 +13,13 @@ MAX_RETRIES = 5
 BACKOFF_BASE = 1.0  # seconds; doubles each retry, so 1, 2, 4, 8, 16
 
 
-def get_with_retry(url: str, *, label: str) -> requests.Response:
+def get_with_retry(url: str, *, label: str, auth: tuple[str, str] | None = None) -> requests.Response:
     """GET with a timeout; retry on 429/5xx with exponential backoff, capped.
 
-    `label` identifies the caller (e.g. "greenhouse") in log lines only.
+    `label` identifies the caller (e.g. "greenhouse") in log lines only. `auth` is sent as an HTTP
+    Basic auth header (for API keys), so the key never appears in the URL or in log lines.
     """
-    return _with_retry(lambda: requests.get(url, timeout=TIMEOUT), label)
+    return _with_retry(lambda: requests.get(url, timeout=TIMEOUT, auth=auth), label)
 
 
 def post_with_retry(url: str, payload: dict, *, label: str) -> requests.Response:

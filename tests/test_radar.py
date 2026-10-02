@@ -464,6 +464,61 @@ class RunRealTest(unittest.TestCase):
         self.assertFalse(wanted("AI Engineer Intern"))  # title_exclude applies too
         self.assertFalse(wanted("Sales Manager"))
 
+    def _wire_reed(self, mock_load, mock_connect):
+        profile = {**PROFILE, "reed": {"keywords": ["AI engineer"], "location": "London",
+                                       "exclude_employers": ["Training Co"]}}
+        targets = TARGETS + [{"name": "Unreadable", "source": "", "board": ""}]
+        mock_load.return_value = {"targets": targets, "profile": profile}
+        mock_connect.side_effect = lambda: real_connect(self.db_path)
+
+    @mock.patch("jobs.radar.reed.fetch_jobs")
+    def test_reed_skips_employers_fetched_from_their_own_board(
+        self, mock_reed, mock_load, mock_connect, mock_send, mock_score, _
+    ):
+        self._wire_reed(mock_load, mock_connect)
+        mock_reed.return_value = [make_job(9, company="NewCo")]
+        mock_score.return_value = scored(8)
+
+        with mock.patch.dict("os.environ", {"REED_API_KEY": "r"}):
+            with fetchers(greenhouse=mock.Mock(return_value=[])):
+                run(dry_run=False)
+
+        args, kwargs = mock_reed.call_args
+        self.assertEqual(args[:3], (["AI engineer"], "London", "r"))
+        # Acme has a readable board; NoBoard, Unsupported and Unreadable don't, so Reed may be their only route.
+        self.assertEqual(kwargs["skip_employers"], ["Acme", "Training Co"])
+        self.assertTrue(kwargs["wanted"]("AI Engineer"))
+        self.assertEqual(len(job_sends(mock_send)), 1)
+
+    @mock.patch("jobs.radar.reed.fetch_jobs")
+    def test_reed_skipped_without_key_and_run_continues(
+        self, mock_reed, mock_load, mock_connect, mock_send, mock_score, _
+    ):
+        self._wire_reed(mock_load, mock_connect)
+
+        with mock.patch.dict("os.environ", ENV, clear=True):  # no REED_API_KEY, even if the shell has one
+            with fetchers(greenhouse=mock.Mock(return_value=[])):
+                with self.assertLogs("jobs.radar", level="INFO") as logs:
+                    self.assertTrue(run(dry_run=False))
+
+        mock_reed.assert_not_called()
+        self.assertIn("skipping reed: REED_API_KEY not set", "\n".join(logs.output))
+        self.assertIsNone(self._read_one("SELECT errors FROM runs")[0])
+
+    @mock.patch("jobs.radar.reed.fetch_jobs", side_effect=Exception("503 Service Unavailable"))
+    def test_reed_failure_is_recorded_and_run_continues(
+        self, mock_reed, mock_load, mock_connect, mock_send, mock_score, _
+    ):
+        self._wire_reed(mock_load, mock_connect)
+        mock_score.return_value = scored(8)
+
+        with mock.patch.dict("os.environ", {"REED_API_KEY": "r"}):
+            with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
+                run(dry_run=False)
+
+        self.assertIn("reed: 503 Service Unavailable", self._read_one("SELECT errors FROM runs")[0])
+        self.assertEqual(len(job_sends(mock_send)), 1)  # the board source still went through
+
     def test_summary_sent_even_when_nothing_is_new(self, mock_load, mock_connect, mock_send, mock_score, _):
         self._wire(mock_load, mock_connect)
         mock_score.return_value = scored(8)

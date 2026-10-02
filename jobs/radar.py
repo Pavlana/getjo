@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import os
 import re
 import sqlite3
 import sys
@@ -11,7 +12,7 @@ from datetime import datetime, timezone
 from core import config, notify, store
 from core.llm import ServiceError
 from jobs.score import load_cv, score_with_retry
-from sources import ashby, greenhouse, lever, smartrecruiters, workable, workday
+from sources import ashby, greenhouse, lever, reed, smartrecruiters, workable, workday
 
 logger = logging.getLogger(__name__)
 
@@ -65,15 +66,48 @@ def matches_filter(job: dict, filter_cfg: dict) -> bool:
     return "remote" in location and _names_any(location, filter_cfg.get("remote_places", []))
 
 
-def _fetch_matches(targets: list[dict], filter_cfg: dict) -> tuple[list[dict], list[str], int]:
-    """Fetch every target with a supported, configured source. Return (matches, errors, fetched)."""
+def _reachable(company: dict) -> bool:
+    return company["source"] in FETCHERS and bool(company["board"])
+
+
+def _fetch_reed(reed_cfg: dict | None, targets: list[dict], filter_cfg: dict, errors: list[str]) -> list[dict]:
+    """Search Reed if the profile has a [reed] section and REED_API_KEY is set; otherwise skip.
+
+    Reed is optional, unlike the Anthropic and Telegram keys, so a missing key doesn't stop the run.
+    Employers we already fetch from their own board are skipped, so the same job isn't found twice;
+    targets with no readable board are not skipped, since Reed may be the only way to see their jobs.
+    """
+    if not reed_cfg:
+        return []
+    api_key = os.environ.get("REED_API_KEY")
+    if not api_key:
+        logger.info("skipping reed: REED_API_KEY not set")
+        return []
+    try:
+        return reed.fetch_jobs(
+            reed_cfg["keywords"], reed_cfg["location"], api_key,
+            wanted=lambda title: title_matches(title, filter_cfg),
+            direct_employers_only=reed_cfg.get("direct_employers_only", True),
+            skip_employers=[c["name"] for c in targets if _reachable(c)] + reed_cfg.get("exclude_employers", []),
+        )
+    except Exception as e:  # one source failing must not stop the run
+        logger.warning("fetch failed for reed: %s", e)
+        errors.append(f"reed: {e}")
+        return []
+
+
+def _fetch_matches(
+    targets: list[dict], filter_cfg: dict, reed_cfg: dict | None = None
+) -> tuple[list[dict], list[str], int]:
+    """Fetch every target with a supported, configured source, then search Reed.
+    Return (matches, errors, fetched)."""
     matches = []
     errors = []
     fetched = 0
     for company in targets:
         name, source, board = company["name"], company["source"], company["board"]
         fetcher = FETCHERS.get(source)
-        if not fetcher or not board:
+        if not _reachable(company):
             logger.info("skipping %s: source %r not yet supported or board not set", name, source)
             continue
         try:
@@ -87,6 +121,10 @@ def _fetch_matches(targets: list[dict], filter_cfg: dict) -> tuple[list[dict], l
             continue
         fetched += len(jobs)
         matches.extend(job for job in jobs if matches_filter(job, filter_cfg))
+
+    jobs = _fetch_reed(reed_cfg, targets, filter_cfg, errors)
+    fetched += len(jobs)
+    matches.extend(job for job in jobs if matches_filter(job, filter_cfg))
     return matches, errors, fetched
 
 
@@ -210,7 +248,7 @@ def run(dry_run: bool = False) -> bool:
     """Run once. Returns False if scoring had to stop early because of a service error."""
     started_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     cfg = config.load_config()
-    matches, errors, fetched = _fetch_matches(cfg["targets"], cfg["profile"]["filter"])
+    matches, errors, fetched = _fetch_matches(cfg["targets"], cfg["profile"]["filter"], cfg["profile"].get("reed"))
 
     if dry_run:
         print(f"dry run: {fetched} jobs fetched, {len(matches)} match the filter")

@@ -37,7 +37,7 @@ It is also my learning project for AI system design. I'm an experienced cloud en
 
 ```
 core/      llm.py (Anthropic calls), store.py (SQLite), notify.py (Telegram), config.py
-sources/   greenhouse.py, lever.py, ashby.py, workday.py, smartrecruiters.py, workable.py
+sources/   greenhouse.py, lever.py, ashby.py, workday.py, smartrecruiters.py, workable.py, reed.py (keyword search)
            -> each returns a list of Job dicts in one shared shape; html_text.py is shared
 jobs/      radar.py (fetch -> filter -> store -> score -> notify)
 evals/     cases/*.jsonl, run.py
@@ -56,4 +56,4 @@ docs/      ROADMAP.md (iterations and tasks), design.md (diagram, job shape), sc
 
 ## Environment variables
 
-`ANTHROPIC_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`
+`ANTHROPIC_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`; optional `REED_API_KEY`
