@@ -17,7 +17,14 @@ BACKOFF_BASE = 1.0  # seconds; doubles each retry, so 1, 2, 4, 8, 16
 # $ per 1M tokens. Add an entry here when config/profile.toml's scoring.model changes.
 PRICING = {
     "claude-haiku-4-5": {"input": 1.00, "output": 5.00},
+    "claude-sonnet-5": {"input": 2.00, "output": 10.00},
 }
+
+# Models that return a 400 if `temperature` is sent: sampling is fixed by the API.
+NO_TEMPERATURE = {"claude-sonnet-5"}
+# Models that think before answering unless told not to. Callers here expect a short, direct reply,
+# so thinking is turned off for them; otherwise it would use part of max_tokens and could cut the reply.
+THINKS_BY_DEFAULT = {"claude-sonnet-5"}
 
 
 @dataclass
@@ -80,8 +87,10 @@ def complete(
         "system": system,
         "messages": [{"role": "user", "content": user}],
     }
-    if temperature is not None:
+    if temperature is not None and model not in NO_TEMPERATURE:
         payload["temperature"] = temperature
+    if model in THINKS_BY_DEFAULT:
+        payload["thinking"] = {"type": "disabled"}
 
     response = _post_with_retry(payload, headers)
     data = response.json()

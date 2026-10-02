@@ -8,7 +8,7 @@ from core.config import ConfigError
 from core.llm import Completion
 from core.store import connect as real_connect
 from core.store import upsert_job
-from evals.run import load_cases, personal_mentions, report, score_cases, summarize, sweep, to_label
+from evals.run import load_cases, main, personal_mentions, report, score_cases, summarize, sweep, to_label
 
 SCORING = {"model": "claude-haiku-4-5", "notify_threshold": 7, "rubric": ["LLM work is core"]}
 
@@ -122,6 +122,22 @@ class SweepTest(unittest.TestCase):
         text = report(results, 0.0, SCORING)
         self.assertIn("Personal mentions: 1 of 1 jobs", text)
         self.assertIn("  FDE — Acme\n      on a career break", text)
+
+
+@mock.patch.dict("os.environ", {"ANTHROPIC_API_KEY": "key"})
+@mock.patch("evals.run.report", return_value="")
+@mock.patch("evals.run.score_cases", return_value=([], 0.0))
+@mock.patch("evals.run.load_cases", return_value=[])
+@mock.patch("evals.run.config.load_config", return_value={"profile": {"scoring": SCORING}})
+class MainTest(unittest.TestCase):
+    def test_uses_profile_model_by_default(self, _load_config, _load_cases, mock_score_cases, _report):
+        main([])
+        self.assertEqual(mock_score_cases.call_args[0][1]["model"], "claude-haiku-4-5")
+
+    def test_model_flag_overrides_profile_for_this_run_only(self, _load_config, _load_cases, mock_score_cases, _report):
+        main(["--model", "claude-sonnet-5"])
+        self.assertEqual(mock_score_cases.call_args[0][1]["model"], "claude-sonnet-5")
+        self.assertEqual(SCORING["model"], "claude-haiku-4-5")
 
 
 class LoadCasesTest(unittest.TestCase):

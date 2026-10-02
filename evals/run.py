@@ -3,6 +3,7 @@
 Run: python -m evals.run
 """
 
+import argparse
 import json
 import logging
 import re
@@ -170,9 +171,15 @@ def report(results: list[dict], cost: float, scoring_cfg: dict) -> str:
     return "\n".join(lines)
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Score the labelled cases and compare with the labels.")
+    parser.add_argument("--model", help="score with this model instead of profile.toml's scoring.model")
+    args = parser.parse_args(argv)
+
     logging.basicConfig(level=logging.WARNING, stream=sys.stdout, format="%(levelname)s %(name)s: %(message)s")
     scoring_cfg = config.load_config()["profile"]["scoring"]
+    if args.model:
+        scoring_cfg = {**scoring_cfg, "model": args.model}
     api_key = config.require_env(["ANTHROPIC_API_KEY"])["ANTHROPIC_API_KEY"]
     results, cost = score_cases(load_cases(), scoring_cfg, api_key)
     print(report(results, cost, scoring_cfg))

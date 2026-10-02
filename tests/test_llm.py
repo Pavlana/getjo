@@ -52,7 +52,28 @@ class CompleteTest(unittest.TestCase):
 
         complete("s", "u", 500, model=MODEL, api_key=API_KEY, temperature=0)
 
-        self.assertEqual(mock_post.call_args[1]["json"]["temperature"], 0)
+        payload = mock_post.call_args[1]["json"]
+        self.assertEqual(payload["temperature"], 0)
+        self.assertNotIn("thinking", payload)
+
+    @mock.patch("core.llm.requests.post")
+    def test_sonnet_5_gets_no_temperature_and_thinking_off(self, mock_post):
+        mock_post.return_value = make_response(200, SUCCESS_BODY)
+
+        complete("s", "u", 500, model="claude-sonnet-5", api_key=API_KEY, temperature=0)
+
+        payload = mock_post.call_args[1]["json"]
+        self.assertNotIn("temperature", payload)
+        self.assertEqual(payload["thinking"], {"type": "disabled"})
+
+    @mock.patch("core.llm.requests.post")
+    def test_sonnet_5_cost(self, mock_post):
+        mock_post.return_value = make_response(200, SUCCESS_BODY)
+
+        result = complete("s", "u", 500, model="claude-sonnet-5", api_key=API_KEY)
+
+        # 1000 * $2.00/1M + 50 * $10.00/1M = $0.0025
+        self.assertAlmostEqual(result.cost, 0.0025, places=6)
 
     @mock.patch("core.llm.requests.post")
     def test_reports_token_usage_and_cost(self, mock_post):
