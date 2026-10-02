@@ -44,9 +44,23 @@ python -m evals.run              # score the labelled jobs and compare with the 
 python -m unittest               # test suite; no network, fixtures in tests/fixtures/
 ```
 
+### On a schedule (macOS launchd)
+
+`scripts/run_radar.sh` loads `.env` and runs the radar once; `scripts/com.getjo.radar.plist` runs it daily at 09:00. Output is appended to `data/radar.log`.
+
+```bash
+sed "s|REPO_DIR|$PWD|g" scripts/com.getjo.radar.plist > ~/Library/LaunchAgents/com.getjo.radar.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.getjo.radar.plist
+launchctl kickstart gui/$(id -u)/com.getjo.radar     # optional: run once now to check
+
+launchctl bootout gui/$(id -u)/com.getjo.radar       # uninstall
+```
+
+A run missed while the Mac is asleep starts on wake; a run missed while it is shut down is skipped.
+
 ## Known limitations
 
 - Only Greenhouse, Lever and Ashby boards are supported. Companies on Workday, Workable, SmartRecruiters or a custom applicant-tracking system are skipped.
-- No scheduler yet: jobs are checked only when `python -m jobs.radar` runs. A twice-daily schedule and a daily summary are planned.
+- The schedule runs on one Mac and depends on it being on; a daily summary message is planned, so a missing message signals a missed run.
 - Scores cluster around 8 for any reasonable fit, so strong and borderline matches are hard to separate with the threshold alone.
 - Description quality varies by source: Greenhouse provides the full posting; Lever and Ashby provide a shorter summary without their bullet-list sections.
