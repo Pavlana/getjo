@@ -17,6 +17,8 @@ flowchart LR
   S -->|score >= threshold| M[Telegram]
 ```
 
+How a job gets its score, step by step (prompt, reply checks, dealbreaker quotes and cap, retries, cost, when it's sent): [`scoring.md`](scoring.md).
+
 ## Job shape (shared by all sources)
 
 | field | type | note |
