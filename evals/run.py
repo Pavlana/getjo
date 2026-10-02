@@ -15,6 +15,7 @@ from jobs.score import load_cv, score_with_retry
 CASES_PATH = Path("evals/cases/scoring.jsonl")
 LABELS = ("apply", "maybe", "skip")
 SKIP_MAX = 3  # a score of 3 or lower counts as "skip"
+SWEEP = range(5, 10)  # thresholds to compare on the same scores
 
 
 def load_cases(path: Path = CASES_PATH) -> list[dict]:
@@ -47,6 +48,22 @@ def summarize(results: list[dict]) -> dict[str, tuple[int, int]]:
         "apply_precision": (sum(r["expected"] == "apply" for r in predicted_apply), len(predicted_apply)),
         "apply_recall": (sum(r["predicted"] == "apply" for r in expected_apply), len(expected_apply)),
     }
+
+
+def sweep(results: list[dict], thresholds: range = SWEEP) -> list[tuple[int, tuple[int, int], tuple[int, int]]]:
+    """For each threshold: (threshold, apply precision, apply recall) from the scores already in results.
+
+    Unscored cases are never sent, whatever the threshold.
+    """
+    rows = []
+    for threshold in thresholds:
+        relabelled = [
+            {"expected": r["expected"], "predicted": "apply" if (r["score"] or 0) >= threshold else "other"}
+            for r in results
+        ]
+        metrics = summarize(relabelled)
+        rows.append((threshold, metrics["apply_precision"], metrics["apply_recall"]))
+    return rows
 
 
 def _fraction(hits: int, total: int) -> str:
@@ -105,6 +122,13 @@ def report(results: list[dict], cost: float, scoring_cfg: dict) -> str:
         f"Apply recall:     {_fraction(*metrics['apply_recall'])}   of jobs you'd apply to, Claude would send",
         f"Cost:             ${cost:.4f}",
     ]
+
+    apply_scores = sorted((r["score"] for r in results if r["expected"] == "apply"), key=lambda s: (s is None, s))
+    lines += ["", "Scores of jobs you'd apply to: " + ", ".join("-" if s is None else str(s) for s in apply_scores)]
+    lines += ["", "Threshold sweep (same scores; apply at score >= T):", "  T    sent  precision     recall"]
+    for threshold, precision, recall in sweep(results):
+        marker = "*" if threshold == scoring_cfg["notify_threshold"] else " "
+        lines.append(f"  {threshold}{marker}  {precision[1]:>4}  {_fraction(*precision):<12}  {_fraction(*recall)}")
     disagreements = [r for r in results if r["expected"] != r["predicted"]]
     if disagreements:
         lines += ["", f"Disagreements ({len(disagreements)}):"]

@@ -8,7 +8,7 @@ from core.config import ConfigError
 from core.llm import Completion
 from core.store import connect as real_connect
 from core.store import upsert_job
-from evals.run import load_cases, report, score_cases, summarize, to_label
+from evals.run import load_cases, report, score_cases, summarize, sweep, to_label
 
 SCORING = {"model": "claude-haiku-4-5", "notify_threshold": 7, "rubric": ["LLM work is core"]}
 
@@ -61,6 +61,34 @@ class SummarizeTest(unittest.TestCase):
         metrics = summarize([result("apply", "skip")])
         self.assertEqual(metrics["apply_precision"], (0, 0))
         self.assertEqual(metrics["apply_recall"], (0, 1))
+
+
+class SweepTest(unittest.TestCase):
+    RESULTS = [
+        {"expected": "apply", "score": 9},
+        {"expected": "apply", "score": 7},
+        {"expected": "maybe", "score": 8},
+        {"expected": "skip", "score": 7},
+        {"expected": "skip", "score": None},
+    ]
+
+    def test_each_threshold_relabels_the_same_scores(self):
+        rows = dict((t, (p, r)) for t, p, r in sweep(self.RESULTS, range(7, 10)))
+        self.assertEqual(rows[7], ((2, 4), (2, 2)))  # sends 9, 7, 8, 7
+        self.assertEqual(rows[8], ((1, 2), (1, 2)))  # sends 9, 8
+        self.assertEqual(rows[9], ((1, 1), (1, 2)))  # sends 9
+
+    def test_unscored_is_never_sent(self):
+        rows = sweep([{"expected": "skip", "score": None}], range(1, 2))
+        self.assertEqual(rows[0][1], (0, 0))
+
+    def test_report_shows_apply_scores_and_marks_current_threshold(self):
+        results = [{**r, "predicted": to_label(r["score"], 7), "raw_score": r["score"],
+                    "title": "t", "company": "c", "claude_note": ""} for r in self.RESULTS]
+        text = report(results, 0.0, SCORING)
+        self.assertIn("Scores of jobs you'd apply to: 7, 9", text)
+        self.assertIn("  7*     4  2/4 (50%)     2/2 (100%)", text)
+        self.assertIn("  8      2  1/2 (50%)     1/2 (50%)", text)
 
 
 class LoadCasesTest(unittest.TestCase):
