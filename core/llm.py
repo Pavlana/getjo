@@ -65,7 +65,9 @@ def _post_with_retry(payload: dict, headers: dict) -> requests.Response:
     raise RuntimeError("unreachable")  # loop always returns or raises
 
 
-def complete(system: str, user: str, max_tokens: int, *, model: str, api_key: str) -> Completion:
+def complete(
+    system: str, user: str, max_tokens: int, *, model: str, api_key: str, temperature: float | None = None
+) -> Completion:
     """Send one message to Claude. Logs input/output tokens and estimated cost per call."""
     headers = {
         "content-type": "application/json",
@@ -78,6 +80,8 @@ def complete(system: str, user: str, max_tokens: int, *, model: str, api_key: st
         "system": system,
         "messages": [{"role": "user", "content": user}],
     }
+    if temperature is not None:
+        payload["temperature"] = temperature
 
     response = _post_with_retry(payload, headers)
     data = response.json()

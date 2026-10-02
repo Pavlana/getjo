@@ -71,8 +71,8 @@ Tick a box only when its acceptance criteria pass.
 
 ## Iteration 5 · Evaluation (week 2)
 
-- [ ] Label 20 real stored jobs by hand in `evals/cases/scoring.jsonl`: `{job_id, expected: "apply" | "maybe" | "skip"}`
-- [ ] `evals/run.py`: runs the scorer on the cases, prints agreement, precision for "apply", and the disagreements
+- [x] Label 20 real stored jobs by hand in `evals/cases/scoring.jsonl`: `{job_id, expected: "apply" | "maybe" | "skip"}`
+- [x] `evals/run.py`: runs the scorer on the cases, prints agreement, precision for "apply", and the disagreements
 - [ ] Record the baseline numbers in `design.md`; change the prompt once, re-run, record again
 
 **Acceptance:** one command prints a comparable number, and you can say whether a prompt change helped.

@@ -11,3 +11,4 @@ __pycache__/
 .claude/settings.local.json
 config/targets.toml
 config/profile.toml
+evals/cases/scoring.jsonl

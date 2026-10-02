@@ -59,7 +59,7 @@ class ScoreJobTest(unittest.TestCase):
 
         system, user = build_prompt(JOB, CV, RUBRIC)
         mock_complete.assert_called_once_with(
-            system, user, MAX_TOKENS, model="claude-haiku-4-5", api_key="k"
+            system, user, MAX_TOKENS, model="claude-haiku-4-5", api_key="k", temperature=0
         )
 
 

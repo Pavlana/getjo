@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 CV_PATH = Path("config/cv.md")
 FENCED = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
 MAX_TOKENS = 600  # the reply is one short JSON object
+TEMPERATURE = 0  # the same job should get the same score, so evals compare prompts, not luck
 
 SYSTEM_TEMPLATE = """\
 You score job postings for one candidate. Compare the posting against the candidate's CV and the rubric below, then reply with a single JSON object and nothing else.
@@ -69,7 +70,7 @@ def build_prompt(job: dict, cv_text: str, rubric: list[str]) -> tuple[str, str]:
 def score_job(job: dict, cv_text: str, rubric: list[str], *, model: str, api_key: str) -> Completion:
     """Ask Claude to score one job. Returns the raw completion; parsing is the caller's job."""
     system, user = build_prompt(job, cv_text, rubric)
-    return complete(system, user, MAX_TOKENS, model=model, api_key=api_key)
+    return complete(system, user, MAX_TOKENS, model=model, api_key=api_key, temperature=TEMPERATURE)
 
 
 def _is_str_list(value: object) -> bool:

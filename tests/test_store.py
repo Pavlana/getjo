@@ -3,7 +3,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from core.store import add_score_attempt, connect, get_scoring_state, record_run, set_score, upsert_job
+from core.store import (
+    add_score_attempt, connect, get_job, get_scoring_state, record_run, set_score, upsert_job,
+)
 
 JOB = {
     "id": "greenhouse:Example Co:123",
@@ -57,6 +59,17 @@ class StoreTest(unittest.TestCase):
         self.assertEqual(add_score_attempt(self.conn, JOB["id"]), 1)
         self.assertEqual(add_score_attempt(self.conn, JOB["id"]), 2)
         self.assertEqual(get_scoring_state(self.conn, JOB["id"]), (None, 2))
+
+    def test_get_job_returns_all_columns(self):
+        upsert_job(self.conn, JOB)
+        job = get_job(self.conn, JOB["id"])
+        self.assertEqual(job["title"], "AI Engineer")
+        self.assertEqual(job["description"], "Build things.")
+        self.assertIsNone(job["score"])
+        self.assertEqual(job["score_attempts"], 0)
+
+    def test_get_job_unknown_is_none(self):
+        self.assertIsNone(get_job(self.conn, "greenhouse:Nobody:0"))
 
     def test_unknown_job_state(self):
         self.assertEqual(get_scoring_state(self.conn, "greenhouse:Nobody:0"), (None, 0))

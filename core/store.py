@@ -66,6 +66,15 @@ def upsert_job(conn: sqlite3.Connection, job: dict) -> bool:
     return cursor.rowcount == 1
 
 
+def get_job(conn: sqlite3.Connection, job_id: str) -> dict | None:
+    """Return a stored job as a dict of its columns, or None if it isn't stored."""
+    cursor = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,))
+    row = cursor.fetchone()
+    if row is None:
+        return None
+    return dict(zip([col[0] for col in cursor.description], row))
+
+
 def get_scoring_state(conn: sqlite3.Connection, job_id: str) -> tuple[int | None, int]:
     """Return (score, score_attempts) for a stored job; (None, 0) if it isn't stored."""
     row = conn.execute("SELECT score, score_attempts FROM jobs WHERE id = ?", (job_id,)).fetchone()

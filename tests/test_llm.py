@@ -43,7 +43,16 @@ class CompleteTest(unittest.TestCase):
         self.assertEqual(kwargs["json"]["system"], "system prompt")
         self.assertEqual(kwargs["json"]["messages"], [{"role": "user", "content": "user prompt"}])
         self.assertEqual(kwargs["timeout"], 30)
+        self.assertNotIn("temperature", kwargs["json"])  # omitted unless asked for
         self.assertEqual(result.text, '{"score": 8}')
+
+    @mock.patch("core.llm.requests.post")
+    def test_temperature_is_sent_when_given(self, mock_post):
+        mock_post.return_value = make_response(200, SUCCESS_BODY)
+
+        complete("s", "u", 500, model=MODEL, api_key=API_KEY, temperature=0)
+
+        self.assertEqual(mock_post.call_args[1]["json"]["temperature"], 0)
 
     @mock.patch("core.llm.requests.post")
     def test_reports_token_usage_and_cost(self, mock_post):
