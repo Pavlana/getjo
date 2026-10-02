@@ -13,3 +13,4 @@ config/targets.toml
 config/profile.toml
 evals/cases/scoring.jsonl
 docs/decisions.md
+docs/sourcing.md
