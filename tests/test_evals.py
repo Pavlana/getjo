@@ -24,6 +24,12 @@ def result(expected: str, predicted: str) -> dict:
     return {"expected": expected, "predicted": predicted}
 
 
+def scored(score: int, reasons=(), red_flags=(), dealbreakers=(), raw_score: int | None = None) -> dict:
+    """A result shaped like score_with_retry's: verified dealbreakers and the pre-cap score included."""
+    return {"score": score, "reasons": list(reasons), "red_flags": list(red_flags),
+            "dealbreakers": list(dealbreakers), "raw_score": score if raw_score is None else raw_score}
+
+
 class ToLabelTest(unittest.TestCase):
     def test_boundaries(self):
         self.assertEqual(to_label(10, 7), "apply")
@@ -102,8 +108,8 @@ class ScoreCasesTest(unittest.TestCase):
     def test_scores_cases_and_reports_disagreements(self, mock_connect, mock_score, _):
         mock_connect.side_effect = lambda: real_connect(self.db_path)
         mock_score.side_effect = [
-            ({"score": 8, "reasons": ["RAG work"], "red_flags": []}, [Completion("", 1, 1, 0.004)]),
-            ({"score": 8, "reasons": ["good"], "red_flags": ["pre-sales"]}, [Completion("", 1, 1, 0.004)]),
+            (scored(8, reasons=["RAG work"]), [Completion("", 1, 1, 0.004)]),
+            (scored(8, reasons=["good"], red_flags=["pre-sales"]), [Completion("", 1, 1, 0.004)]),
         ]
         cases = [
             {"job_id": "j1", "expected": "apply", "reason": "", "title": "AI Engineer", "company": "Acme"},
@@ -124,7 +130,7 @@ class ScoreCasesTest(unittest.TestCase):
 
     def test_never_writes_scores(self, mock_connect, mock_score, _):
         mock_connect.side_effect = lambda: real_connect(self.db_path)
-        mock_score.return_value = ({"score": 8, "reasons": ["x"], "red_flags": []}, [])
+        mock_score.return_value = (scored(8, reasons=["x"]), [])
 
         score_cases([{"job_id": "j1", "expected": "apply"}], SCORING, "key")
 
@@ -141,13 +147,26 @@ class ScoreCasesTest(unittest.TestCase):
 
     def test_result_with_no_reasons_or_red_flags_is_reported(self, mock_connect, mock_score, _):
         mock_connect.side_effect = lambda: real_connect(self.db_path)
-        mock_score.return_value = ({"score": 8, "reasons": [], "red_flags": []}, [])
+        mock_score.return_value = (scored(8), [])
 
         results, cost = score_cases(
             [{"job_id": "j1", "expected": "skip", "title": "AI Engineer", "company": "Acme"}], SCORING, "key"
         )
 
         self.assertIn("(no reasons or red flags given)", report(results, cost, SCORING))
+
+    def test_capped_score_shows_rule_quote_and_original_score(self, mock_connect, mock_score, _):
+        mock_connect.side_effect = lambda: real_connect(self.db_path)
+        travel = {"rule": "Travel of 25% or more", "quote": "Travel up to 30%"}
+        mock_score.return_value = (scored(3, reasons=["fit"], dealbreakers=[travel], raw_score=8), [])
+
+        results, cost = score_cases(
+            [{"job_id": "j1", "expected": "apply", "title": "AI Engineer", "company": "Acme"}], SCORING, "key"
+        )
+        text = report(results, cost, SCORING)
+
+        self.assertIn("Claude: skip (3, capped from 8)", text)
+        self.assertIn('Claude\'s dealbreaker: Travel of 25% or more — "Travel up to 30%"', text)
 
     def test_unscored_case_counts_as_disagreement(self, mock_connect, mock_score, _):
         mock_connect.side_effect = lambda: real_connect(self.db_path)

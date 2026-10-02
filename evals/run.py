@@ -56,6 +56,9 @@ def _fraction(hits: int, total: int) -> str:
 def _claude_note(result: dict | None) -> str:
     if result is None:
         return "(no usable reply after two tries)"
+    if result["dealbreakers"]:
+        first = result["dealbreakers"][0]
+        return f"dealbreaker: {first['rule']} — \"{first['quote']}\""
     if result["red_flags"]:
         return f"red flag: {result['red_flags'][0]}"
     if result["reasons"]:
@@ -82,6 +85,7 @@ def score_cases(cases: list[dict], scoring_cfg: dict, api_key: str) -> tuple[lis
             results.append({
                 **case,
                 "score": score,
+                "raw_score": result["raw_score"] if result else None,
                 "predicted": to_label(score, scoring_cfg["notify_threshold"]),
                 "claude_note": _claude_note(result),
             })
@@ -105,7 +109,12 @@ def report(results: list[dict], cost: float, scoring_cfg: dict) -> str:
     if disagreements:
         lines += ["", f"Disagreements ({len(disagreements)}):"]
         for r in disagreements:
-            score = "-" if r["score"] is None else r["score"]
+            if r["score"] is None:
+                score = "-"
+            elif r["raw_score"] != r["score"]:
+                score = f"{r['score']}, capped from {r['raw_score']}"
+            else:
+                score = r["score"]
             lines.append(f"  you: {r['expected']:<5}  Claude: {r['predicted']} ({score})  {r['title']} — {r['company']}")
             if r.get("reason"):
                 lines.append(f"      your reason: {r['reason']}")
