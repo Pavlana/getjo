@@ -83,7 +83,7 @@ Tick a box only when its acceptance criteria pass.
 ## Iteration 6 · Schedule (week 3)
 
 - [ ] Run automatically once a day (cron/launchd on the laptop, or GitHub Actions with secrets)
-- [ ] A daily summary message even when there are no new jobs, so silence means broken, not empty
+- [x] A daily summary message even when there are no new jobs, so silence means broken, not empty
 - [ ] Evals run in GitHub Actions on every push; the build fails below the agreed threshold
 
 **Acceptance:** two unattended runs in a row, visible in the `runs` table.

@@ -80,6 +80,6 @@ A run missed while the Mac is asleep starts on wake; a run missed while it is sh
 ## Known limitations
 
 - Only Greenhouse, Lever and Ashby boards are supported. Companies on Workday, Workable, SmartRecruiters or a custom applicant-tracking system are skipped.
-- The schedule runs on one Mac and depends on it being on; a daily summary message is planned, so a missing message signals a missed run.
+- The schedule runs on one Mac and depends on it being on. Every run ends with a summary message in Telegram, so a missed run shows up only as a missing message; nothing outside the Mac raises an alert.
 - Scores cluster around 8 for any reasonable fit, so strong and borderline matches are hard to separate with the threshold alone.
 - Description quality varies by source: Greenhouse provides the full posting; Lever and Ashby provide a shorter summary without their bullet-list sections.

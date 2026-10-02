@@ -84,6 +84,29 @@ def _message(job: dict, result: dict) -> str:
     return f"{result['score']}/10 · {job['title']}\n{place}\n{top}\n{job['url']}"
 
 
+SUMMARY_HEADER = "job-radar run"
+SUMMARY_MAX_ERRORS = 3  # error lines quoted in the summary; the full list is in runs.errors
+SUMMARY_MAX_ERROR_CHARS = 200
+
+
+def _summary(fetched: int, matched: int, new: int, tally: Tally, cost: str, errors: list[str]) -> str:
+    """One message per run, sent even when nothing is new, so a missing message means the run broke."""
+    lines = [
+        f"{SUMMARY_HEADER}: {fetched} fetched · {matched} matched · {new} new · "
+        f"{tally.scored} scored · {tally.notified} sent · {cost}",
+    ]
+    if tally.stopped:
+        lines.append(f"Scoring stopped early: {tally.stopped}")
+    if errors:
+        lines.append(f"{len(errors)} errors:")
+        lines += [f"- {e[:SUMMARY_MAX_ERROR_CHARS]}" for e in errors[:SUMMARY_MAX_ERRORS]]
+        if len(errors) > SUMMARY_MAX_ERRORS:
+            lines.append(f"…and {len(errors) - SUMMARY_MAX_ERRORS} more (see runs.errors)")
+    else:
+        lines.append("No errors.")
+    return "\n".join(lines)
+
+
 def _score_one(
     conn: sqlite3.Connection, job: dict, cv_text: str, scoring_cfg: dict,
     env: dict[str, str], errors: list[str], tally: Tally,
@@ -207,6 +230,12 @@ def run(dry_run: bool = False) -> bool:
         fetched, len(matches), new_count, tally.scored, tally.failed, tally.gave_up, tally.notified, cost,
         " (scoring stopped early)" if tally.stopped else "",
     )
+
+    summary = _summary(fetched, len(matches), new_count, tally, cost, errors)
+    try:
+        notify.send_telegram(summary, token=env["TELEGRAM_BOT_TOKEN"], chat_id=env["TELEGRAM_CHAT_ID"])
+    except Exception as e:  # the run's work is done and recorded; a lost summary shows up as silence
+        logger.warning("summary send failed: %s", e)
     return tally.stopped is None
 
 

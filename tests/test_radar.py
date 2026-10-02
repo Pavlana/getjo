@@ -8,7 +8,7 @@ from unittest import mock
 from core.config import ConfigError
 from core.llm import Completion, ServiceError
 from core.store import connect as real_connect
-from jobs.radar import _message, main, matches_filter, run
+from jobs.radar import SUMMARY_HEADER, _message, main, matches_filter, run
 
 PROFILE = {
     "filter": {
@@ -55,6 +55,16 @@ def scored(score: int, cost: float = 0.004):
 def unscored(cost: float = 0.004):
     """What score_with_retry returns after two unusable replies."""
     return None, [Completion("bad", 100, 10, cost), Completion("bad", 100, 10, cost)]
+
+
+def job_sends(mock_send: mock.Mock) -> list[str]:
+    """Texts of the job messages sent, leaving out the end-of-run summary."""
+    texts = [c.args[0] for c in mock_send.call_args_list]
+    return [t for t in texts if not t.startswith(SUMMARY_HEADER)]
+
+
+def sent_summaries(mock_send: mock.Mock) -> list[str]:
+    return [c.args[0] for c in mock_send.call_args_list if c.args[0].startswith(SUMMARY_HEADER)]
 
 
 def fetchers(**by_source: mock.Mock):
@@ -203,8 +213,8 @@ class RunRealTest(unittest.TestCase):
 
         with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
             run(dry_run=False)
-        self.assertEqual(mock_send.call_count, 1)
-        self.assertTrue(mock_send.call_args[0][0].startswith("8/10 · AI Engineer\n"))
+        self.assertEqual(len(job_sends(mock_send)), 1)
+        self.assertTrue(job_sends(mock_send)[0].startswith("8/10 · AI Engineer\n"))
         self.assertEqual(self._score_of("greenhouse:Acme:1"), 8)
 
         mock_send.reset_mock()
@@ -212,7 +222,7 @@ class RunRealTest(unittest.TestCase):
         with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
             run(dry_run=False)
         mock_score.assert_not_called()
-        mock_send.assert_not_called()
+        self.assertEqual(job_sends(mock_send), [])
 
     def test_scoring_gets_cv_rubric_dealbreakers_and_facts_from_profile(
         self, mock_load, mock_connect, mock_send, mock_score, _
@@ -234,7 +244,7 @@ class RunRealTest(unittest.TestCase):
         with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
             run(dry_run=False)
 
-        mock_send.assert_not_called()
+        self.assertEqual(job_sends(mock_send), [])
         self.assertEqual(self._score_of("greenhouse:Acme:1"), 5)
 
     def test_unscored_job_stays_null_and_is_retried_next_run(
@@ -245,13 +255,13 @@ class RunRealTest(unittest.TestCase):
 
         with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
             run(dry_run=False)
-        mock_send.assert_not_called()
+        self.assertEqual(job_sends(mock_send), [])
         self.assertIsNone(self._score_of("greenhouse:Acme:1"))
 
         with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
             run(dry_run=False)
         self.assertEqual(mock_score.call_count, 2)
-        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(len(job_sends(mock_send)), 1)
         self.assertEqual(self._score_of("greenhouse:Acme:1"), 8)
 
     def test_scoring_error_is_recorded_and_run_continues(
@@ -266,7 +276,7 @@ class RunRealTest(unittest.TestCase):
         self.assertIn("api down", self._read_one("SELECT errors FROM runs")[0])
         self.assertIsNone(self._score_of("greenhouse:Acme:1"))
         self.assertEqual(self._score_of("greenhouse:Acme:2"), 8)
-        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(len(job_sends(mock_send)), 1)
 
     def test_notify_failure_leaves_job_unscored_for_retry(
         self, mock_load, mock_connect, mock_send, mock_score, _
@@ -369,7 +379,7 @@ class RunRealTest(unittest.TestCase):
                 run(dry_run=False)
 
         self.assertEqual(mock_score.call_count, 2)
-        self.assertEqual(mock_send.call_count, 2)
+        self.assertEqual(len(job_sends(mock_send)), 2)
         self.assertIsNone(self._score_of("greenhouse:Acme:1"))
 
     def test_successful_score_on_last_try_is_kept(self, mock_load, mock_connect, mock_send, mock_score, _):
@@ -381,7 +391,7 @@ class RunRealTest(unittest.TestCase):
                 run(dry_run=False)
 
         self.assertEqual(self._score_of("greenhouse:Acme:1"), 8)
-        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(len(job_sends(mock_send)), 1)
 
     def test_non_matching_job_not_stored_scored_or_notified(
         self, mock_load, mock_connect, mock_send, mock_score, _
@@ -392,7 +402,7 @@ class RunRealTest(unittest.TestCase):
             run(dry_run=False)
 
         mock_score.assert_not_called()
-        mock_send.assert_not_called()
+        self.assertEqual(job_sends(mock_send), [])
         self.assertEqual(self._read_one("SELECT COUNT(*) FROM jobs")[0], 0)
 
     def test_fetch_failure_is_logged_and_run_continues(self, mock_load, mock_connect, mock_send, mock_score, _):
@@ -432,7 +442,52 @@ class RunRealTest(unittest.TestCase):
 
         mock_greenhouse.assert_called_once_with("Acme", "acme")
         mock_lever.assert_called_once_with("LeverCo", "leverco")
-        self.assertEqual(mock_send.call_count, 2)
+        self.assertEqual(len(job_sends(mock_send)), 2)
+
+    def test_summary_sent_even_when_nothing_is_new(self, mock_load, mock_connect, mock_send, mock_score, _):
+        self._wire(mock_load, mock_connect)
+        mock_score.return_value = scored(8)
+
+        for _run in range(2):
+            with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
+                run(dry_run=False)
+
+        summaries = sent_summaries(mock_send)
+        self.assertEqual(len(summaries), 2)
+        self.assertEqual(mock_send.call_args_list[-1].args[0], summaries[-1])  # last message of the run
+        self.assertEqual(
+            summaries[-1],
+            "job-radar run: 1 fetched · 1 matched · 0 new · 0 scored · 0 sent · $0.0000\nNo errors.",
+        )
+
+    def test_summary_lists_errors_and_early_stop(self, mock_load, mock_connect, mock_send, mock_score, _):
+        targets = [{"name": f"Co{i}", "source": "greenhouse", "board": f"co{i}"} for i in range(4)]
+        self._wire(mock_load, mock_connect, targets)
+        mock_score.side_effect = ServiceError("401 authentication_error: invalid x-api-key")
+        fetch = mock.Mock(side_effect=[Exception("404 a"), Exception("404 b"), Exception("404 c"), [make_job(1)]])
+
+        with fetchers(greenhouse=fetch):
+            run(dry_run=False)
+
+        summary = sent_summaries(mock_send)[0].splitlines()
+        self.assertEqual(summary[1], "Scoring stopped early: 401 authentication_error: invalid x-api-key")
+        self.assertEqual(summary[2], "4 errors:")
+        self.assertEqual(summary[3:6], ["- Co0: 404 a", "- Co1: 404 b", "- Co2: 404 c"])
+        self.assertEqual(summary[6], "…and 1 more (see runs.errors)")
+
+    def test_failed_summary_send_does_not_fail_the_run(
+        self, mock_load, mock_connect, mock_send, mock_score, _
+    ):
+        self._wire(mock_load, mock_connect)
+        mock_send.side_effect = Exception("telegram down")
+
+        with fetchers(greenhouse=mock.Mock(return_value=[])):
+            with self.assertLogs("jobs.radar", level="WARNING") as logs:
+                self.assertTrue(run(dry_run=False))
+
+        self.assertEqual(len(sent_summaries(mock_send)), 1)
+        self.assertIn("summary send failed: telegram down", logs.output[-1])
+        self.assertEqual(self._read_one("SELECT COUNT(*) FROM runs")[0], 1)
 
     def test_real_run_requires_anthropic_key(self, mock_load, mock_connect, mock_send, mock_score, _):
         self._wire(mock_load, mock_connect)
