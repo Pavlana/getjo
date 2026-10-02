@@ -8,7 +8,7 @@ Find relevant job openings from company job boards without checking them by hand
 
 ```mermaid
 flowchart LR
-  T[targets.toml] --> F[fetch: greenhouse / lever / ashby]
+  T[targets.toml] --> F[fetch: greenhouse / lever / ashby /\nworkday / smartrecruiters / workable]
   F --> N[normalise to Job]
   N --> K[keyword filter\nprofile.toml]
   K --> S[(SQLite\njobs, runs)]
@@ -24,7 +24,7 @@ How a job gets its score, step by step (prompt, reply checks, dealbreaker quotes
 | field | type | note |
 |---|---|---|
 | id | str | `source:company:job_id`, primary key |
-| source | str | greenhouse, lever, ashby |
+| source | str | greenhouse, lever, ashby, workday, smartrecruiters, workable |
 | company | str | from targets.toml |
 | title | str | |
 | location | str | as given by the board |
@@ -35,4 +35,6 @@ How a job gets its score, step by step (prompt, reply checks, dealbreaker quotes
 
 ## Known limitations
 
-- Only companies using Greenhouse, Lever or Ashby are covered.
+- Only companies using Greenhouse, Lever, Ashby, Workday, SmartRecruiters or Workable are covered.
+- Workday has no documented public API; the adapter uses the JSON endpoints Workday's own careers pages call, which can change without notice.
+- Workday and SmartRecruiters list postings without descriptions; details are fetched (one request per posting) only for titles that pass the title filter.

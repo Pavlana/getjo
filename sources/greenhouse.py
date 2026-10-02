@@ -2,32 +2,16 @@
 
 from datetime import datetime, timezone
 from html import unescape
-from html.parser import HTMLParser
 
 from core.http import get_with_retry
+from sources.html_text import html_to_text
 
 BOARDS_API = "https://boards-api.greenhouse.io/v1/boards"
 
 
-class _TextExtractor(HTMLParser):
-    """Collects the plain-text content of an HTML fragment, tags dropped."""
-
-    def __init__(self):
-        super().__init__()
-        self._parts: list[str] = []
-
-    def handle_data(self, data: str) -> None:
-        self._parts.append(data)
-
-    def text(self) -> str:
-        return "".join(self._parts)
-
-
 def _strip_html(html_content: str) -> str:
-    """Convert Greenhouse's (entity-escaped) HTML content field to plain text."""
-    parser = _TextExtractor()
-    parser.feed(unescape(html_content))
-    return " ".join(parser.text().split())
+    """Convert Greenhouse's content field to plain text: it is entity-escaped on top of being HTML."""
+    return html_to_text(unescape(html_content))
 
 
 def parse_jobs(company: str, payload: dict) -> list[dict]:

@@ -1,0 +1,42 @@
+{
+ "jobPostingInfo": {
+  "id": "9333768bb0d81000a6e1a844ed6e0000",
+  "title": "Lead Data Engineer",
+  "jobDescription": "<h1><span class=\"emphasis-3\">Join Kainos and Shape the Future </span></h1><p>At Kainos, we’re problem solvers, innovators, and collaborators - driven by a shared mission to create real impact. Whether we’re transforming digital services for millions, delivering cutting-edge Workday solutions, or pushing the boundaries of technology, we do it together.</p><p><br />We believe in a <b>people-first culture</b>, where your ideas are valued, your growth is supported, and your contributions truly make a difference. Here, you’ll be part of a diverse, ambitious team that celebrates creativity and collaboration.</p><p><br />Ready to make your mark? <b>Join us and be part of something bigger.</b></p><p>As a Lead Data Engineer (Consultant) at Kainos you will be responsible for designing and developing data processing and data persistence software components for solutions which handle data at scale. Working in agile teams, Lead Data Engineers provide strong development leadership for team members and take responsibility for the quality of the codebase as well as the match to user needs.</p><br /><p>Your responsibilities will include:</p><ul><li>Taking responsibility for the development of whole components or subsystems within a team. Development incorporates design, code, test and defect resolution.</li><li>Focusing on hands-on design and development, using open source and commercial platforms.</li><li>Defining and enforcing development best practice and coaching team members to ensure consistency.</li><li>Working with project architects, taking responsibility for non-functional needs of ETL/ELT data processing pipelines such as robustness and performance.</li><li>Taking responsibility for standards and execution of unit and integration testing done within the team.</li><li>Taking responsibility for software product due diligence and integration.</li><li>Leading troubleshooting and tuning of activities.</li><li>Working with Operations teams to ensure the application software is operationally ready.</li><li>Working with Security Architects and accreditors to ensure compliance with relevant legal and security requirements</li><li>Advising customers and managers and other team members of the estimated effort and technical implications of user stories and user journeys.</li><li>Contributing to technical proposals as part of the sales process.</li><li>Managing, coaching and developing a small number of staff, with a focus on managing employee performance and assisting in their career development. You’ll also provide direction for your team as you solve problems together</li></ul><br /><p>Minimum (essential) requirements:</p><ul><li>Experience of leading a team of engineers in the implementation of data-intensive system components</li><li>Experience of applying standards for design (patterns), development, (style guides) and operational readiness (automation, deployment)</li><li>Proficient software development experience in one of Java, Scala, or Python</li><li>Strong commercial experience of working with Palantir </li><li>Software development experience with data-processing platforms from vendors such as AWS, Azure, GCP, Databricks.</li><li>Expert in SQL or SQL extensions for analytical use case</li><li>Expert understanding of distributed data stores and data processing frameworks</li><li>Ability to simply and clearly communicate technical design both written and verbally</li><li>Proficient in designing analytical and operational data models</li></ul><br /><p>Desirable:</p><ul><li>Comfortable with Data Warehouse methods and techniques</li><li>Actively shares their thoughts and views on data practices</li><li>AWS/Azure/GCP Certified in Data Services </li><li>Expertise in continuous improvement and sharing input on data best practice</li><li>Participation in development and/or technology communities</li></ul><br /><p><b>Who you are:</b></p><p>Our vision is to enable outstanding people to create digital solutions that have a positive impact on people’s lives. Our values aren&#39;t abstract; they are the behaviours we expect from each other every day, and underpin everything that we do. We expect everyone to display our values by being <b>determined</b> in how obstacles are overcome; <b>honest</b> when dealing with others; <b>respectful</b> of how you treat others; <b>creative</b> to find solutions to complex problems and <b>cooperative</b> by sharing information, knowledge and experience. </p><p>These values, applied collectively, help to produce an outstanding Kainos person, team and culture. </p><br /><p><b>About us</b> </p><p>Kainos is a high-growth IT services company providing digital technology solutions and agile software development to enterprise customers. Across our 30-year history, we have worked on transformational projects across government, NHS and a myriad of private sector clients.  </p><br /><h1><span class=\"emphasis-3\"><b>Embracing our differences  </b> </span></h1><p>At Kainos, we believe in the power of diversity, equity and inclusion. We are committed to building a team that is as diverse as the world we live in, where everyone is valued, respected, and given an equal chance to thrive.   We actively seek out talented people from all backgrounds, regardless of age, race, ethnicity, gender, sexual orientation, religion, disability, or any other characteristic that makes them who they are.   We also believe every candidate deserves a level playing field.  <br /></p><p>Our friendly talent acquisition team is here to support you every step of the way, so if you require any accommodations or adjustments, we encourage you to reach out.  <br /></p><p>We understand that everyone&#39;s journey is different, and by having a private conversation we can ensure that our recruitment process is tailored to your needs.</p><p></p><p> </p>",
+  "location": "Belfast",
+  "additionalLocations": [
+   "London",
+   "Homeworker - UK",
+   "Birmingham"
+  ],
+  "postedOn": "Posted 4 Days Ago",
+  "startDate": "2026-09-28",
+  "timeType": "Full time",
+  "jobReqId": "JR_18460",
+  "jobPostingId": "Data-Engineer_JR_18460",
+  "jobPostingSiteId": "Kainos",
+  "country": {
+   "descriptor": "United Kingdom",
+   "id": "29247e57dbaf46fb855b224e03170bc7"
+  },
+  "canApply": true,
+  "posted": true,
+  "includeResumeParsing": true,
+  "jobRequisitionLocation": {
+   "descriptor": "Belfast",
+   "country": {
+    "descriptor": "United Kingdom",
+    "id": "29247e57dbaf46fb855b224e03170bc7",
+    "alpha2Code": "GB"
+   }
+  },
+  "externalUrl": "https://kainos.wd3.myworkdayjobs.com/Kainos/job/Belfast/Data-Engineer_JR_18460",
+  "questionnaireId": "53fb0dd47cf70178a7fae0d8ba54eb07",
+  "secondaryQuestionnaireId": "5e4fc89784e50100783130ff4b050000"
+ },
+ "hiringOrganization": {
+  "name": "Kainos Software Limited",
+  "url": ""
+ },
+ "userAuthenticated": false
+}

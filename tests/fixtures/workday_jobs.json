@@ -1,0 +1,40 @@
+{
+ "total": 4,
+ "jobPostings": [
+  {
+   "title": "Lead Data Engineer",
+   "externalPath": "/job/Belfast/Data-Engineer_JR_18460",
+   "timeType": "Full time",
+   "locationsText": "4 Locations",
+   "postedOn": "Posted 4 Days Ago",
+   "bulletFields": [
+    "JR_18460"
+   ]
+  },
+  {
+   "title": "UX Designer (12 months FTC)",
+   "externalPath": "/job/Belfast/UX-Designer--12-months-FTC-_JR_18397",
+   "timeType": "Full time",
+   "locationsText": "4 Locations",
+   "postedOn": "Posted Today",
+   "bulletFields": [
+    "JR_18397"
+   ]
+  },
+  {
+   "title": "Senior Product Marketing Manager - Workday Product",
+   "externalPath": "/job/Homeworker---UK/Product-Marketing-Manager---Workday-Product_JR_17515-1",
+   "timeType": "Full time",
+   "locationsText": "3 Locations",
+   "postedOn": "Posted Yesterday",
+   "bulletFields": [
+    "JR_17515"
+   ]
+  },
+  {
+   "bulletFields": [
+    "REF000001"
+   ]
+  }
+ ]
+}

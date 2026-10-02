@@ -93,10 +93,10 @@ Tick a box only when its acceptance criteria pass.
 ## Iteration 7 · Wider sourcing
 
 - [x] Investigation, no code: for each target company skipped today (no supported board), find which job board it uses; check which job search services have a usable API for UK roles (full descriptions, rate limits, terms). Output: one table and a recommendation (new board adapters, a search-based source, or both)
-- [ ] Config: targets acquired by another company point at the parent company's board; drop targets whose roles can't be separated from the parent's
-- [ ] `sources/workday.py`: list endpoint for all postings, then one detail call per title match for full locations and description (the list shows "N Locations"); undocumented feed, so fixture tests and a clear log line when the shape changes
-- [ ] `sources/smartrecruiters.py`: official public postings API, filtered to the UK
-- [ ] `sources/workable.py`: official widget API
+- [x] Config: targets acquired by another company point at the parent company's board; drop targets whose roles can't be separated from the parent's
+- [x] `sources/workday.py`: list endpoint for all postings, then one detail call per title match for full locations and description (the list shows "N Locations"); undocumented feed, so fixture tests and a clear log line when the shape changes
+- [x] `sources/smartrecruiters.py`: official public postings API; details only for titles that pass the title filter
+- [x] `sources/workable.py`: official widget API
 - [ ] Reed search source: free API key, keyword + location search, details endpoint for the full description; check description length live before building. Same job from two sources (a search service and the company's own board) is notified once
 - [ ] Jooble: request an API key, check fields, description length and terms; build a source only if descriptions are usable for scoring
 - [ ] DevITjobs UK: check terms of use for the public jobs list; if allowed, use it for discovery (companies hiring for matching titles) and, if job details are reachable, as a source

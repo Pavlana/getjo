@@ -1,0 +1,175 @@
+{
+ "id": "744000153192361",
+ "name": "Software Engineer - FX Markets",
+ "uuid": "068eb782-f6ae-4985-a453-14df9f3e9640",
+ "jobId": "a3ac9a81-1120-489b-8827-651ea310bcb9",
+ "jobAdId": "dca111c4-a168-4acb-9751-a6d5886c67ab",
+ "defaultJobAd": true,
+ "refNumber": "R4886",
+ "company": {
+  "name": "Wise",
+  "identifier": "Wise"
+ },
+ "location": {
+  "city": "London",
+  "country": "gb",
+  "address": "Worship Square, 65 Clifton Street",
+  "postalCode": "EC2A 4JE",
+  "remote": false,
+  "hybrid": true,
+  "fullLocation": "London, , United Kingdom"
+ },
+ "customField": [
+  {
+   "fieldId": "65d3d0e0d37044292ef9549b",
+   "fieldLabel": "Job Profile",
+   "valueId": "d840bf80cda1100200746ba303cc0000",
+   "valueLabel": "Engineer IC2 - JP101084"
+  },
+  {
+   "fieldId": "65cea5ac287e8d0651481809",
+   "fieldLabel": "Time Type",
+   "valueId": "d2f4dafccd5101059b6cf09e12278400",
+   "valueLabel": "Full time"
+  },
+  {
+   "fieldId": "65d3d06b2865b46cfa4f0ec3",
+   "fieldLabel": "Worker Sub Type",
+   "valueId": "046034784a4d016f1889ba8863278f0d",
+   "valueLabel": "Permanent"
+  },
+  {
+   "fieldId": "65d3d141c86c2f3257de414c",
+   "fieldLabel": "Cost Center Hierarchy",
+   "valueId": "6d8f1bd75a7001b7185a4531c7125d1c",
+   "valueLabel": "Engineering"
+  },
+  {
+   "fieldId": "65d3d1796435ba43bdb089ad",
+   "fieldLabel": "Squad",
+   "valueId": "c23f18fabbcf1001b4e6b54ce19e0000",
+   "valueLabel": "Treasury (Squad)"
+  },
+  {
+   "fieldId": "658553f79a81b00900831a80",
+   "fieldLabel": "Brands",
+   "valueId": "default",
+   "valueLabel": "Wise"
+  },
+  {
+   "fieldId": "65d3d0374c34974b271801f9",
+   "fieldLabel": "Management Level",
+   "valueId": "e82698b94195019ad99d30d3f100d510",
+   "valueLabel": "4"
+  },
+  {
+   "fieldId": "65d3d16de5ae4c7be012a87e",
+   "fieldLabel": "Tribe",
+   "valueId": "c23f18fabbcf1001b48842b1dc460000",
+   "valueLabel": "Finance & Treasury (Tribe)"
+  },
+  {
+   "fieldId": "65d3d151a5d3185b4341a7ab",
+   "fieldLabel": "Cost Center",
+   "valueId": "c0b389e7c7791001aa0b726efdb00000",
+   "valueLabel": "Engineering Finance & Treasury"
+  },
+  {
+   "fieldId": "65d3d0a7d37044292ef9549a",
+   "fieldLabel": "Job Family",
+   "valueId": "e380f86fa0b2011d520d2e87bc004000",
+   "valueLabel": "Engineering"
+  },
+  {
+   "fieldId": "COUNTRY",
+   "fieldLabel": "Country/Region",
+   "valueId": "gb",
+   "valueLabel": "United Kingdom"
+  },
+  {
+   "fieldId": "65d3d05c735007771b14e932",
+   "fieldLabel": "Worker Type",
+   "valueId": "EE",
+   "valueLabel": "Wiser"
+  },
+  {
+   "fieldId": "65d90823f2e6436af25814c2",
+   "fieldLabel": "Job Ad Salary Range",
+   "valueLabel": "68000 - 87500 GBP Annual"
+  },
+  {
+   "fieldId": "65d3d0926435ba43bdb089ac",
+   "fieldLabel": "Job Family Group",
+   "valueId": "cf8ed98297e201fc81857d1fba008e14",
+   "valueLabel": "Technology"
+  },
+  {
+   "fieldId": "65cec407735007771b14e92d",
+   "fieldLabel": "Company",
+   "valueId": "046034784a4d01f4134f114764273117",
+   "valueLabel": "Wise Payments Limited"
+  },
+  {
+   "fieldId": "65d9080b4aa2f46927dfc1f3",
+   "fieldLabel": "WD Target Hire Date",
+   "valueLabel": "2025-12-31"
+  }
+ ],
+ "releasedDate": "2026-10-02T14:04:29.638Z",
+ "creator": {
+  "name": "",
+  "avatarUrl": ""
+ },
+ "postingUrl": "https://jobs.smartrecruiters.com/Wise/744000153192361-software-engineer-fx-markets",
+ "applyUrl": "https://jobs.smartrecruiters.com/Wise/744000153192361-software-engineer-fx-markets?oga=true",
+ "referralUrl": "https://jobs.smartrecruiters.com/external-referrals/company/Wise/publication/068eb782-f6ae-4985-a453-14df9f3e9640?dcr_ci=Wise",
+ "jobAd": {
+  "sections": {
+   "companyDescription": {
+    "title": "Company Description",
+    "text": "<p>Wise is a global technology company, building the best way to move and manage the world’s money.<br>\n<strong>Min fees. Max ease. Full speed.</strong></p><p>Whether people and businesses are sending money to another country, spending abroad, or making and receiving international payments, Wise is on a mission to make their lives easier and save them money.</p><p>As part of our team, you will be helping us create an entirely new network for the world's money.<br>\n<strong>For everyone, everywhere.</strong></p><p>More about <strong><a href=\"https://wise.jobs/our-mission\" rel=\"noopener noreferrer\">our mission</a></strong> and <strong><a href=\"https://wise.jobs/what-we-offer\" rel=\"noopener noreferrer\">what we offer</a></strong>.</p>"
+   },
+   "jobDescription": {
+    "title": "Job Description",
+    "text": "<p>We are looking for a Software Engineer with a strong product and engineering mindset to join our Treasury FX Risk team.</p><p>Our team calculates FX risk from trading foreign exchange to meet Wise's liquidity needs. We manage mission critical services that provide accurate real-time risk calculations and aggregate market data from platforms like Bloomberg and Reuters. Collaborating with Data Science, we also ensure risks are hedged accurately and dynamically. Our systems offer a real-time view of Wise’s global financial positions, translating transactions into actual and forecasted money movements. Trading teams rely on our data to manage FX exposure and execute trades worth tens to hundreds of millions of pounds, making reliability and scalability our top priorities.</p><p><strong>How we work</strong></p><p>We operate on a strong belief in automation, programmatic implementation, and reusable design. We’re looking for people who can step back and think holistically about the ecosystem, but also follow through and help implement the design; drawing on the resources across the rest of the treasury tribe.</p><p>As we grow, sustaining our trajectory requires ongoing refinement and iteration of our services with a focus on availability, security, and user experience. We need a seasoned engineer who can dissect complex requirements and create elegant, impactful solutions, empowering our teams to advance our mission with agility and confidence.</p><p>What will you be working on?</p><p>You will be working on initiatives to ensure that our services continue to provide accurate and timely data as the company scales.</p><ul><li><p>Improving the scalability and reliability of our exchange rates infrastructure</p></li><li><p>Designing and implementing real time data streaming flows to enable real time monitoring of metrics related to financial risks</p></li><li><p>Tackle challenges related to processing large data volumes, addressing performance bottlenecks, and implementing fault-tolerant solutions.</p></li><li><p>Gain in-depth expertise in the finance and treasury domains, contributing to the management of Wise's financial infrastructure.</p></li><li><p>Collaborate deeply with Operations, Analytics, Trading, and Product teams to align technical and business objectives.</p></li></ul>"
+   },
+   "qualifications": {
+    "title": "Qualifications",
+    "text": "<p>What do you need?</p><ul><li><p>Knowledge of Java and Spring Boot.</p></li><li><p>A strong sense of ownership and excellent communication skills to drive cross-team projects.</p></li><li><p>Ability to work independently while also being a collaborative team player, frequently engaging in cross-team efforts.</p></li><li><p>The ability to break down complex projects into incremental milestones that deliver customer value.</p></li><li><p>Curiosity and a drive for continuous learning and improvement.</p></li><li><p>Adherence to and advocacy for best coding practices, continuous delivery, and code reviews.</p></li><li><p>A proven track record of leading technical initiatives and mentoring other engineers.</p></li><li><p>Good discipline and skill in producing written documentation and diagrams.</p></li></ul>"
+   },
+   "additionalInformation": {
+    "title": "Additional Information",
+    "text": "<p><strong>Interested? Find out more:</strong></p><ul><li><p><strong><a href=\"https://wise.jobs/how-we-work\" rel=\"noopener noreferrer\">How we work – a practical guide</a></strong></p></li><li><p><strong><a href=\"https://wise.jobs/diversity-equity-and-inclusion\" rel=\"noopener noreferrer\">DEI @ Wise</a></strong></p></li><li><p><strong><a href=\"https://medium.com/wise-engineering/wise-tech-stack-2025-update-d0e63fe718c7\" rel=\"noopener noreferrer\">Wise Tech Stack (2025 update)</a></strong></p></li><li><p><strong><a href=\"https://www.youtube.com/watch?v=XNMeFMoqBEA&amp;amp;feature=youtu.be\" rel=\"noopener noreferrer\">See what it's like to work at Wise London!</a></strong></p></li><li><p><strong><a href=\"https://wise.jobs/engineering-career-map\" rel=\"noopener noreferrer\">Our Engineering career map</a></strong></p></li><li><p><strong>Wise Engineering –<a href=\"https://medium.com/wise-engineering\" rel=\"noopener noreferrer\"> https://medium.com/wise-engineering</a></strong></p></li></ul><p><strong>What do we offer:&#xa0;</strong></p><ul><li><p><strong>Starting salary:&#xa0;</strong></p></li><li><p><strong><a href=\"https://wise.jobs/what-we-offer\" rel=\"noopener noreferrer\">Wise Benefits</a></strong></p></li></ul><p><strong>Interested in more than one role?</strong></p><p><strong>If you're interested in multiple roles, please apply for just one—the one you're most excited about. If you submit multiple applications requiring the same assessment, we'll continue your recruitment journey using your first application, and any duplicate applications will be automatically closed. This helps ensure a fair and consistent interview process. If another role feels like a better fit, you can discuss this with your recruiter during the process.</strong></p><div sr-tagline=\"\"></div><p>For everyone, everywhere. We're people building money without borders&#xa0; — without judgement or prejudice, too. We believe teams are strongest when they are diverse, equitable and inclusive.</p><p>We're proud to have a truly international team, and we celebrate our differences.<br>\nInclusive teams help us live our values and make sure every Wiser feels respected, empowered to contribute towards our mission and able to progress in their careers.</p><p>If you want to find out more about what it's like to work at Wise visit&#xa0;<a href=\"https://www.wise.jobs/\" rel=\"noopener noreferrer\" target=\"_blank\">Wise.Jobs</a>.</p><p>Keep up to date with life at Wise by following us on&#xa0;<a href=\"https://www.linkedin.com/company/1769571/\" rel=\"noopener noreferrer\" target=\"_blank\">LinkedIn</a>&#xa0;and&#xa0;<a href=\"https://www.instagram.com/wisecareers/\" rel=\"noopener noreferrer\" target=\"_blank\">Instagram</a>.</p>"
+   }
+  }
+ },
+ "compensation": {
+  "min": 68500,
+  "max": 87500,
+  "currency": "GBP",
+  "period": "YEARLY"
+ },
+ "active": true,
+ "visibility": "PUBLIC",
+ "industry": {
+  "id": "financial_services",
+  "label": "Financial Services"
+ },
+ "function": {
+  "id": "engineering",
+  "label": "Engineering"
+ },
+ "experienceLevel": {
+  "id": "mid_senior_level",
+  "label": "Mid-Senior Level"
+ },
+ "typeOfEmployment": {
+  "id": "permanent",
+  "label": "Full-time"
+ },
+ "language": {
+  "code": "en-GB",
+  "label": "English (UK)",
+  "labelNative": "English (UK)"
+ }
+}

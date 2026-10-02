@@ -1,6 +1,6 @@
 # job-radar
 
-Watches public job boards (Greenhouse, Lever, Ashby) for AI engineering roles, filters them, scores each one against a candidate's CV with Claude, and sends strong matches to a Telegram chat.
+Watches public job boards (Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Workable) for AI engineering roles, filters them, scores each one against a candidate's CV with Claude, and sends strong matches to a Telegram chat.
 
 Built with plain Python (`requests` + standard library) and no frameworks, as a small, fully visible example of an LLM system: sources, storage, scoring, evaluation and notification.
 
@@ -8,7 +8,7 @@ Status: in development. See `docs/ROADMAP.md` for progress, `docs/design.md` for
 
 ## What it does
 
-- Fetches open jobs from each configured company's Greenhouse, Lever or Ashby board.
+- Fetches open jobs from each configured company's Greenhouse, Lever, Ashby, Workday, SmartRecruiters or Workable board.
 - Filters by title keywords and location: on-site roles in the listed locations, and remote roles only in the listed regions (`config/profile.toml`).
 - Stores matches in SQLite, deduplicated by `source:company:job_id`.
 - Scores each new match from 1 to 10 against the CV, a rubric of preferences and a list of dealbreakers. A dealbreaker only counts when the model quotes the posting stating it, and the code then caps the score at 3.
@@ -79,7 +79,8 @@ A run missed while the Mac is asleep starts on wake; a run missed while it is sh
 
 ## Known limitations
 
-- Only Greenhouse, Lever and Ashby boards are supported. Companies on Workday, Workable, SmartRecruiters or a custom applicant-tracking system are skipped.
+- Supported boards: Greenhouse, Lever, Ashby, Workday, SmartRecruiters and Workable. Companies on other systems (e.g. Avature, or a custom careers site) are skipped.
+- Workday has no documented public API: the adapter uses the endpoints its own careers pages call, so a change on Workday's side shows up as a fetch error for those companies.
 - The schedule runs on one Mac and depends on it being on. Every run ends with a summary message in Telegram, so a missed run shows up only as a missing message; nothing outside the Mac raises an alert.
 - Scores cluster around 8 for any reasonable fit, so strong and borderline matches are hard to separate with the threshold alone.
 - Description quality varies by source: Greenhouse provides the full posting; Lever and Ashby provide a shorter summary without their bullet-list sections.

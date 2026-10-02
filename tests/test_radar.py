@@ -444,6 +444,26 @@ class RunRealTest(unittest.TestCase):
         mock_lever.assert_called_once_with("LeverCo", "leverco")
         self.assertEqual(len(job_sends(mock_send)), 2)
 
+    def test_detail_sources_get_the_title_filter_others_do_not(
+        self, mock_load, mock_connect, mock_send, mock_score, _
+    ):
+        targets = [
+            {"name": "Acme", "source": "greenhouse", "board": "acme"},
+            {"name": "WdCo", "source": "workday", "board": "wdco.wd3/Careers"},
+        ]
+        self._wire(mock_load, mock_connect, targets)
+        mock_greenhouse = mock.Mock(return_value=[])
+        mock_workday = mock.Mock(return_value=[])
+
+        with fetchers(greenhouse=mock_greenhouse, workday=mock_workday):
+            run(dry_run=False)
+
+        mock_greenhouse.assert_called_once_with("Acme", "acme")
+        wanted = mock_workday.call_args.kwargs["wanted"]
+        self.assertTrue(wanted("Senior AI Engineer"))
+        self.assertFalse(wanted("AI Engineer Intern"))  # title_exclude applies too
+        self.assertFalse(wanted("Sales Manager"))
+
     def test_summary_sent_even_when_nothing_is_new(self, mock_load, mock_connect, mock_send, mock_score, _):
         self._wire(mock_load, mock_connect)
         mock_score.return_value = scored(8)

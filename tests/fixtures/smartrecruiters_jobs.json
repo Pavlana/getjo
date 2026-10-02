@@ -1,0 +1,292 @@
+{
+ "offset": 0,
+ "limit": 100,
+ "totalFound": 2,
+ "content": [
+  {
+   "id": "744000153192361",
+   "name": "Software Engineer - FX Markets",
+   "uuid": "068eb782-f6ae-4985-a453-14df9f3e9640",
+   "jobAdId": "dca111c4-a168-4acb-9751-a6d5886c67ab",
+   "defaultJobAd": true,
+   "refNumber": "R4886",
+   "company": {
+    "identifier": "Wise",
+    "name": "Wise"
+   },
+   "releasedDate": "2026-10-02T14:04:29.638Z",
+   "location": {
+    "city": "London",
+    "country": "gb",
+    "address": "Worship Square, 65 Clifton Street",
+    "postalCode": "EC2A 4JE",
+    "remote": false,
+    "hybrid": true,
+    "fullLocation": "London, , United Kingdom"
+   },
+   "industry": {
+    "id": "financial_services",
+    "label": "Financial Services"
+   },
+   "department": {},
+   "function": {
+    "id": "engineering",
+    "label": "Engineering"
+   },
+   "typeOfEmployment": {
+    "id": "permanent",
+    "label": "Full-time"
+   },
+   "experienceLevel": {
+    "id": "mid_senior_level",
+    "label": "Mid-Senior Level"
+   },
+   "customField": [
+    {
+     "fieldId": "65d3d0e0d37044292ef9549b",
+     "fieldLabel": "Job Profile",
+     "valueId": "d840bf80cda1100200746ba303cc0000",
+     "valueLabel": "Engineer IC2 - JP101084"
+    },
+    {
+     "fieldId": "65cea5ac287e8d0651481809",
+     "fieldLabel": "Time Type",
+     "valueId": "d2f4dafccd5101059b6cf09e12278400",
+     "valueLabel": "Full time"
+    },
+    {
+     "fieldId": "65d3d06b2865b46cfa4f0ec3",
+     "fieldLabel": "Worker Sub Type",
+     "valueId": "046034784a4d016f1889ba8863278f0d",
+     "valueLabel": "Permanent"
+    },
+    {
+     "fieldId": "65d3d141c86c2f3257de414c",
+     "fieldLabel": "Cost Center Hierarchy",
+     "valueId": "6d8f1bd75a7001b7185a4531c7125d1c",
+     "valueLabel": "Engineering"
+    },
+    {
+     "fieldId": "65d3d1796435ba43bdb089ad",
+     "fieldLabel": "Squad",
+     "valueId": "c23f18fabbcf1001b4e6b54ce19e0000",
+     "valueLabel": "Treasury (Squad)"
+    },
+    {
+     "fieldId": "658553f79a81b00900831a80",
+     "fieldLabel": "Brands",
+     "valueId": "default",
+     "valueLabel": "Wise"
+    },
+    {
+     "fieldId": "65d3d0374c34974b271801f9",
+     "fieldLabel": "Management Level",
+     "valueId": "e82698b94195019ad99d30d3f100d510",
+     "valueLabel": "4"
+    },
+    {
+     "fieldId": "65d3d16de5ae4c7be012a87e",
+     "fieldLabel": "Tribe",
+     "valueId": "c23f18fabbcf1001b48842b1dc460000",
+     "valueLabel": "Finance & Treasury (Tribe)"
+    },
+    {
+     "fieldId": "65d3d151a5d3185b4341a7ab",
+     "fieldLabel": "Cost Center",
+     "valueId": "c0b389e7c7791001aa0b726efdb00000",
+     "valueLabel": "Engineering Finance & Treasury"
+    },
+    {
+     "fieldId": "65d3d0a7d37044292ef9549a",
+     "fieldLabel": "Job Family",
+     "valueId": "e380f86fa0b2011d520d2e87bc004000",
+     "valueLabel": "Engineering"
+    },
+    {
+     "fieldId": "COUNTRY",
+     "fieldLabel": "Country/Region",
+     "valueId": "gb",
+     "valueLabel": "United Kingdom"
+    },
+    {
+     "fieldId": "65d3d05c735007771b14e932",
+     "fieldLabel": "Worker Type",
+     "valueId": "EE",
+     "valueLabel": "Wiser"
+    },
+    {
+     "fieldId": "65d3d0926435ba43bdb089ac",
+     "fieldLabel": "Job Family Group",
+     "valueId": "cf8ed98297e201fc81857d1fba008e14",
+     "valueLabel": "Technology"
+    },
+    {
+     "fieldId": "65cec407735007771b14e92d",
+     "fieldLabel": "Company",
+     "valueId": "046034784a4d01f4134f114764273117",
+     "valueLabel": "Wise Payments Limited"
+    },
+    {
+     "fieldId": "65d90823f2e6436af25814c2",
+     "fieldLabel": "Job Ad Salary Range",
+     "valueLabel": "68000 - 87500 GBP Annual"
+    },
+    {
+     "fieldId": "65d9080b4aa2f46927dfc1f3",
+     "fieldLabel": "WD Target Hire Date",
+     "valueLabel": "2025-12-31"
+    }
+   ],
+   "visibility": "PUBLIC",
+   "ref": "https://api.smartrecruiters.com/v1/companies/wise/postings/744000153192361",
+   "language": {
+    "code": "en-GB",
+    "label": "English (UK)",
+    "labelNative": "English (UK)"
+   }
+  },
+  {
+   "id": "744000153213524",
+   "name": "Senior Product Analyst (IC2), SEND",
+   "uuid": "883ca06a-e052-49c6-9320-b6084ce7e7e5",
+   "jobAdId": "60da2488-b421-4612-8964-614dd11765ef",
+   "defaultJobAd": true,
+   "refNumber": "R10611",
+   "company": {
+    "identifier": "Wise",
+    "name": "Wise"
+   },
+   "releasedDate": "2026-10-02T15:10:18.270Z",
+   "location": {
+    "city": "London",
+    "country": "gb",
+    "address": "Worship Square, 65 Clifton Street",
+    "postalCode": "EC2A 4JE",
+    "remote": false,
+    "hybrid": true,
+    "hybridDescription": "3 Days/Week",
+    "fullLocation": "London, , United Kingdom"
+   },
+   "industry": {
+    "id": "financial_services",
+    "label": "Financial Services"
+   },
+   "department": {},
+   "function": {
+    "id": "analyst",
+    "label": "Analyst"
+   },
+   "typeOfEmployment": {
+    "id": "permanent",
+    "label": "Full-time"
+   },
+   "experienceLevel": {
+    "id": "mid_senior_level",
+    "label": "Mid-Senior Level"
+   },
+   "customField": [
+    {
+     "fieldId": "65d3d0e0d37044292ef9549b",
+     "fieldLabel": "Job Profile",
+     "valueId": "e380f86fa0b2019c0bb4debd9501f700",
+     "valueLabel": "Analyst IC2 - JP100166"
+    },
+    {
+     "fieldId": "65cea5ac287e8d0651481809",
+     "fieldLabel": "Time Type",
+     "valueId": "d2f4dafccd5101059b6cf09e12278400",
+     "valueLabel": "Full time"
+    },
+    {
+     "fieldId": "65d3d06b2865b46cfa4f0ec3",
+     "fieldLabel": "Worker Sub Type",
+     "valueId": "046034784a4d016f1889ba8863278f0d",
+     "valueLabel": "Permanent"
+    },
+    {
+     "fieldId": "65d3d141c86c2f3257de414c",
+     "fieldLabel": "Cost Center Hierarchy",
+     "valueId": "6d8f1bd75a70018bf711a731c712ad1c",
+     "valueLabel": "Product"
+    },
+    {
+     "fieldId": "65d3d1796435ba43bdb089ad",
+     "fieldLabel": "Squad",
+     "valueId": "c23f18fabbcf1001b62c5b30baab0001",
+     "valueLabel": "Send (Squad)"
+    },
+    {
+     "fieldId": "658553f79a81b00900831a80",
+     "fieldLabel": "Brands",
+     "valueId": "default",
+     "valueLabel": "Wise"
+    },
+    {
+     "fieldId": "65d3d0374c34974b271801f9",
+     "fieldLabel": "Management Level",
+     "valueId": "e82698b94195019ad99d30d3f100d510",
+     "valueLabel": "4"
+    },
+    {
+     "fieldId": "65d3d16de5ae4c7be012a87e",
+     "fieldLabel": "Tribe",
+     "valueId": "2508138664ba1001b4eeef7e41fa0000",
+     "valueLabel": "Global Product (Tribe)"
+    },
+    {
+     "fieldId": "65d3d151a5d3185b4341a7ab",
+     "fieldLabel": "Cost Center",
+     "valueId": "6d8f1bd75a70019ffe01a132c712981d",
+     "valueLabel": "Product Analysts"
+    },
+    {
+     "fieldId": "65d3d0a7d37044292ef9549a",
+     "fieldLabel": "Job Family",
+     "valueId": "e380f86fa0b2014f17894886bc001600",
+     "valueLabel": "Analytics - General"
+    },
+    {
+     "fieldId": "COUNTRY",
+     "fieldLabel": "Country/Region",
+     "valueId": "gb",
+     "valueLabel": "United Kingdom"
+    },
+    {
+     "fieldId": "65d3d05c735007771b14e932",
+     "fieldLabel": "Worker Type",
+     "valueId": "EE",
+     "valueLabel": "Wiser"
+    },
+    {
+     "fieldId": "65d3d0926435ba43bdb089ac",
+     "fieldLabel": "Job Family Group",
+     "valueId": "cf8ed98297e201f1fb5fc5e3b9006c14",
+     "valueLabel": "Analytics"
+    },
+    {
+     "fieldId": "65cec407735007771b14e92d",
+     "fieldLabel": "Company",
+     "valueId": "046034784a4d01f4134f114764273117",
+     "valueLabel": "Wise Payments Limited"
+    },
+    {
+     "fieldId": "65d90823f2e6436af25814c2",
+     "fieldLabel": "Job Ad Salary Range",
+     "valueLabel": "60000 - 85000 GBP Annual"
+    },
+    {
+     "fieldId": "65d9080b4aa2f46927dfc1f3",
+     "fieldLabel": "WD Target Hire Date",
+     "valueLabel": "2026-10-31"
+    }
+   ],
+   "visibility": "PUBLIC",
+   "ref": "https://api.smartrecruiters.com/v1/companies/wise/postings/744000153213524",
+   "language": {
+    "code": "en",
+    "label": "English",
+    "labelNative": "English (US)"
+   }
+  }
+ ]
+}

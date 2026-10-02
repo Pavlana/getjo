@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from core import config, notify, store
 from core.llm import ServiceError
 from jobs.score import load_cv, score_with_retry
-from sources import ashby, greenhouse, lever
+from sources import ashby, greenhouse, lever, smartrecruiters, workable, workday
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,13 @@ FETCHERS = {
     "greenhouse": greenhouse.fetch_jobs,
     "lever": lever.fetch_jobs,
     "ashby": ashby.fetch_jobs,
+    "workable": workable.fetch_jobs,
+    "workday": workday.fetch_jobs,
+    "smartrecruiters": smartrecruiters.fetch_jobs,
 }
+# Sources that need one extra request per posting for its description: they fetch details only
+# for titles the filter wants, so a company with 700 postings costs a handful of extra requests.
+NEEDS_TITLE_FILTER = {"workday", "smartrecruiters"}
 
 MAX_SCORE_ATTEMPTS = 2  # failed runs for one job before it is left unscored for good: one retry, no more
 
@@ -40,16 +46,20 @@ def _names_any(text: str, terms: list[str]) -> bool:
     return any(re.search(rf"(?<![a-z0-9]){re.escape(term.lower())}(?![a-z0-9])", text) for term in terms)
 
 
-def matches_filter(job: dict, filter_cfg: dict) -> bool:
-    """Title must hit an include keyword and no exclude keyword. Location must name one of
-    `locations`, or be remote and name one of `remote_places`."""
-    title = job["title"].lower()
-    location = (job["location"] or "").lower()
+def title_matches(title: str, filter_cfg: dict) -> bool:
+    """Title hits an include keyword and no exclude keyword."""
+    title = title.lower()
+    return any(kw.lower() in title for kw in filter_cfg["title_include"]) and not any(
+        kw.lower() in title for kw in filter_cfg["title_exclude"]
+    )
 
-    if not any(kw.lower() in title for kw in filter_cfg["title_include"]):
+
+def matches_filter(job: dict, filter_cfg: dict) -> bool:
+    """Title must pass title_matches. Location must name one of `locations`, or be remote and
+    name one of `remote_places`."""
+    if not title_matches(job["title"], filter_cfg):
         return False
-    if any(kw.lower() in title for kw in filter_cfg["title_exclude"]):
-        return False
+    location = (job["location"] or "").lower()
     if _names_any(location, filter_cfg["locations"]):
         return True
     return "remote" in location and _names_any(location, filter_cfg.get("remote_places", []))
@@ -67,7 +77,10 @@ def _fetch_matches(targets: list[dict], filter_cfg: dict) -> tuple[list[dict], l
             logger.info("skipping %s: source %r not yet supported or board not set", name, source)
             continue
         try:
-            jobs = fetcher(name, board)
+            if source in NEEDS_TITLE_FILTER:
+                jobs = fetcher(name, board, wanted=lambda title: title_matches(title, filter_cfg))
+            else:
+                jobs = fetcher(name, board)
         except Exception as e:  # one source failing must not stop the run
             logger.warning("fetch failed for %s: %s", name, e)
             errors.append(f"{name}: {e}")

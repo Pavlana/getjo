@@ -1,6 +1,6 @@
 # job-radar
 
-Polls public job boards (Greenhouse, Lever, Ashby), filters listings, scores them against my CV with Claude, stores them in SQLite and sends new matches to my Telegram bot (@getjo_bot).
+Polls public job boards (Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Workable), filters listings, scores them against my CV with Claude, stores them in SQLite and sends new matches to my Telegram bot (@getjo_bot).
 
 It is also my learning project for AI system design. I'm an experienced cloud engineer (Azure, security, CI/CD) returning to work. I want to understand every line, so work in small steps and explain decisions.
 
@@ -37,7 +37,8 @@ It is also my learning project for AI system design. I'm an experienced cloud en
 
 ```
 core/      llm.py (Anthropic calls), store.py (SQLite), notify.py (Telegram), config.py
-sources/   greenhouse.py, lever.py, ashby.py  -> each returns a list of Job dicts in one shared shape
+sources/   greenhouse.py, lever.py, ashby.py, workday.py, smartrecruiters.py, workable.py
+           -> each returns a list of Job dicts in one shared shape; html_text.py is shared
 jobs/      radar.py (fetch -> filter -> store -> score -> notify)
 evals/     cases/*.jsonl, run.py
 tests/     unit tests + fixtures/
