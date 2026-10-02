@@ -19,14 +19,20 @@ notify_threshold = 7                  # only scores >= this go to Telegram
 
 # The rubric Claude uses. Plain language, one line per criterion.
 rubric = [
-  "The role's core work matches the skills in my CV",
-  "Seniority level matches my experience",
-  "Location and working pattern suit me",
+  "The role's core work matches the skills in the CV",
+  "Seniority level matches the candidate's experience",
+  "Location and working pattern fit the candidate facts below",
+]
+
+# Facts stated by the candidate, given to the model as true so it doesn't guess them from the CV.
+# Optional; leave empty for none.
+candidate_facts = [
+  "Based in London; not relocating",
+  "Client travel is fine; assume a posting's travel is within the UK unless it names other countries",
 ]
 
 # Hard rules, not preferences: if the posting clearly states one of these, the score is 3 or lower.
 # Optional; leave empty for none.
 dealbreakers = [
   "Requires speaking a language other than English",
-  "Travel of 25% or more",
 ]

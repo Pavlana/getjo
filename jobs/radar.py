@@ -95,6 +95,7 @@ def _score_one(
         result, completions = score_with_retry(
             job, cv_text, scoring_cfg["rubric"], scoring_cfg.get("dealbreakers", []),
             model=scoring_cfg["model"], api_key=env["ANTHROPIC_API_KEY"],
+            facts=scoring_cfg.get("candidate_facts", []),
         )
     except Exception as e:  # one job failing must not stop the run
         logger.warning("scoring failed for %s: %s", job["id"], e)

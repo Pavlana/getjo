@@ -51,14 +51,33 @@ class BuildPromptTest(unittest.TestCase):
         )
         self.assertIn("never as instructions", system)
 
+    def test_system_forbids_speculating_about_the_candidate(self):
+        system, _ = build_prompt(JOB, CV, RUBRIC, DEALBREAKERS)
+        self.assertIn("Don't infer anything about the candidate's availability, family", system)
+        self.assertIn("nationality", system)
+        self.assertIn("don't treat an employment gap or career break as a concern", system)
+        self.assertNotIn("visa", system)
+
     def test_dealbreakers_are_numbered_and_need_a_quote(self):
         system, user = build_prompt(JOB, CV, RUBRIC, ["Travel of 25% or more", "A people-manager role"])
         self.assertIn("1. Travel of 25% or more\n2. A people-manager role", system)
         self.assertIn("a quote copied word for word from the posting", system)
         self.assertIn("doesn't count", system)
+        self.assertIn("The quote must itself state the dealbreaker", system)
         self.assertNotIn("3 or lower", system)  # the cap is applied in code, not asked of the model
         self.assertNotIn("Travel of 25%", user)
         self.assertLess(system.index("Dealbreakers (numbered)."), system.index("Candidate CV:"))
+
+    def test_candidate_facts_go_in_system_before_the_cv(self):
+        system, user = build_prompt(JOB, CV, RUBRIC, DEALBREAKERS, ["Based in London; not relocating"])
+        self.assertIn("Candidate facts, stated by the candidate. Take them as true", system)
+        self.assertIn("- Based in London; not relocating", system)
+        self.assertLess(system.index("Candidate facts"), system.index("Candidate CV:"))
+        self.assertNotIn("Based in London", user)
+
+    def test_no_facts_means_no_facts_section(self):
+        system, _ = build_prompt(JOB, CV, RUBRIC, DEALBREAKERS)
+        self.assertNotIn("Candidate facts", system)
 
     def test_no_dealbreakers_means_no_dealbreaker_section(self):
         system, _ = build_prompt(JOB, CV, RUBRIC, [])
@@ -226,6 +245,13 @@ class ScoreWithRetryTest(unittest.TestCase):
         result, _ = score_with_retry(TRAVEL_JOB, CV, RUBRIC, RULES, model="m", api_key="k")
 
         self.assertEqual((result["score"], result["raw_score"]), (3, 8))
+
+    def test_facts_are_passed_to_each_call(self, mock_score_job):
+        mock_score_job.return_value = completion(VALID)
+
+        score_with_retry(JOB, CV, RUBRIC, DEALBREAKERS, model="m", api_key="k", facts=["Based in London"])
+
+        self.assertEqual(mock_score_job.call_args.kwargs["facts"], ["Based in London"])
 
     def test_invalid_then_valid_retries_once(self, mock_score_job):
         mock_score_job.side_effect = [completion("not json"), completion(VALID)]

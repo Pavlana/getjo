@@ -8,7 +8,7 @@ from core.config import ConfigError
 from core.llm import Completion
 from core.store import connect as real_connect
 from core.store import upsert_job
-from evals.run import load_cases, report, score_cases, summarize, sweep, to_label
+from evals.run import load_cases, personal_mentions, report, score_cases, summarize, sweep, to_label
 
 SCORING = {"model": "claude-haiku-4-5", "notify_threshold": 7, "rubric": ["LLM work is core"]}
 
@@ -63,6 +63,31 @@ class SummarizeTest(unittest.TestCase):
         self.assertEqual(metrics["apply_recall"], (0, 1))
 
 
+class PersonalMentionsTest(unittest.TestCase):
+    def test_finds_inferences_about_the_candidate(self):
+        result = scored(8, reasons=["Strong RAG fit"], red_flags=[
+            "Candidate is on a career break (childcare) and may have travel constraints",
+            "Family commitments may limit in-office days",
+            "Requires Kubernetes experience",
+        ])
+        self.assertEqual(personal_mentions(result), [
+            "Candidate is on a career break (childcare) and may have travel constraints",
+            "Family commitments may limit in-office days",
+        ])
+
+    def test_finds_inferences_about_origin_or_status(self):
+        result = scored(7, red_flags=["Nationality may complicate vetting", "Visa status unclear"])
+        self.assertEqual(len(personal_mentions(result)), 2)
+
+    def test_ignores_ordinary_concerns_and_stated_facts(self):
+        result = scored(6, reasons=["Fits the skills gap the team describes"],
+                        red_flags=["Research-heavy role", "US-based role; candidate is London-based and not relocating"])
+        self.assertEqual(personal_mentions(result), [])
+
+    def test_unscored_has_none(self):
+        self.assertEqual(personal_mentions(None), [])
+
+
 class SweepTest(unittest.TestCase):
     RESULTS = [
         {"expected": "apply", "score": 9},
@@ -89,6 +114,14 @@ class SweepTest(unittest.TestCase):
         self.assertIn("Scores of jobs you'd apply to: 7, 9", text)
         self.assertIn("  7*     4  2/4 (50%)     2/2 (100%)", text)
         self.assertIn("  8      2  1/2 (50%)     1/2 (50%)", text)
+        self.assertIn("Personal mentions: 0 of 5 jobs", text)
+
+    def test_report_lists_personal_mentions(self):
+        results = [{"expected": "skip", "predicted": "maybe", "score": 6, "raw_score": 6, "title": "FDE",
+                    "company": "Acme", "claude_note": "", "personal_mentions": ["on a career break"]}]
+        text = report(results, 0.0, SCORING)
+        self.assertIn("Personal mentions: 1 of 1 jobs", text)
+        self.assertIn("  FDE — Acme\n      on a career break", text)
 
 
 class LoadCasesTest(unittest.TestCase):

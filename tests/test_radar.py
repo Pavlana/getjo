@@ -20,6 +20,7 @@ PROFILE = {
     "scoring": {
         "model": "claude-haiku-4-5", "notify_threshold": 7,
         "rubric": ["LLM work is core"], "dealbreakers": ["Travel of 25% or more"],
+        "candidate_facts": ["Based in London"],
     },
 }
 
@@ -207,7 +208,7 @@ class RunRealTest(unittest.TestCase):
         mock_score.assert_not_called()
         mock_send.assert_not_called()
 
-    def test_scoring_gets_cv_rubric_and_dealbreakers_from_profile(
+    def test_scoring_gets_cv_rubric_dealbreakers_and_facts_from_profile(
         self, mock_load, mock_connect, mock_send, mock_score, _
     ):
         self._wire(mock_load, mock_connect)
@@ -218,7 +219,7 @@ class RunRealTest(unittest.TestCase):
 
         args, kwargs = mock_score.call_args
         self.assertEqual(args[1:], ("cv text", ["LLM work is core"], ["Travel of 25% or more"]))
-        self.assertEqual(kwargs, {"model": "claude-haiku-4-5", "api_key": "a"})
+        self.assertEqual(kwargs, {"model": "claude-haiku-4-5", "api_key": "a", "facts": ["Based in London"]})
 
     def test_below_threshold_is_stored_but_not_notified(self, mock_load, mock_connect, mock_send, mock_score, _):
         self._wire(mock_load, mock_connect)

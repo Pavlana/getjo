@@ -5,6 +5,7 @@ Run: python -m evals.run
 
 import json
 import logging
+import re
 import sys
 from pathlib import Path
 
@@ -16,6 +17,21 @@ CASES_PATH = Path("evals/cases/scoring.jsonl")
 LABELS = ("apply", "maybe", "skip")
 SKIP_MAX = 3  # a score of 3 or lower counts as "skip"
 SWEEP = range(5, 10)  # thresholds to compare on the same scores
+# Inferences about the candidate's life rather than the role; flagged for a human to review.
+# Relocation is a stated candidate fact, so mentioning it is expected and not searched for.
+PERSONAL = re.compile(
+    r"\b(career break|employment gap|career gap|child ?care|children|caregiv\w*|sabbatical|maternity|"
+    r"paternity|parental leave|family|pregnan\w*|personal circumstances|nationality|citizenship|ethnic\w*|"
+    r"religio\w*|visa)\b",
+    re.IGNORECASE,
+)
+
+
+def personal_mentions(result: dict | None) -> list[str]:
+    """Reasons and red flags that mention personal circumstances."""
+    if result is None:
+        return []
+    return [text for text in result["reasons"] + result["red_flags"] if PERSONAL.search(text)]
 
 
 def load_cases(path: Path = CASES_PATH) -> list[dict]:
@@ -95,7 +111,7 @@ def score_cases(cases: list[dict], scoring_cfg: dict, api_key: str) -> tuple[lis
                 raise ConfigError(f"case {case['job_id']} is not in data/jobs.db")
             result, completions = score_with_retry(
                 job, cv_text, scoring_cfg["rubric"], scoring_cfg.get("dealbreakers", []),
-                model=scoring_cfg["model"], api_key=api_key,
+                model=scoring_cfg["model"], api_key=api_key, facts=scoring_cfg.get("candidate_facts", []),
             )
             cost += sum(c.cost or 0 for c in completions)
             score = result["score"] if result else None
@@ -105,6 +121,7 @@ def score_cases(cases: list[dict], scoring_cfg: dict, api_key: str) -> tuple[lis
                 "raw_score": result["raw_score"] if result else None,
                 "predicted": to_label(score, scoring_cfg["notify_threshold"]),
                 "claude_note": _claude_note(result),
+                "personal_mentions": personal_mentions(result),
             })
     finally:
         conn.close()
@@ -122,6 +139,8 @@ def report(results: list[dict], cost: float, scoring_cfg: dict) -> str:
         f"Apply recall:     {_fraction(*metrics['apply_recall'])}   of jobs you'd apply to, Claude would send",
         f"Cost:             ${cost:.4f}",
     ]
+    mentioned = [r for r in results if r.get("personal_mentions")]
+    lines.append(f"Personal mentions: {len(mentioned)} of {len(results)} jobs   (should be 0; listed below)")
 
     apply_scores = sorted((r["score"] for r in results if r["expected"] == "apply"), key=lambda s: (s is None, s))
     lines += ["", "Scores of jobs you'd apply to: " + ", ".join("-" if s is None else str(s) for s in apply_scores)]
@@ -129,7 +148,12 @@ def report(results: list[dict], cost: float, scoring_cfg: dict) -> str:
     for threshold, precision, recall in sweep(results):
         marker = "*" if threshold == scoring_cfg["notify_threshold"] else " "
         lines.append(f"  {threshold}{marker}  {precision[1]:>4}  {_fraction(*precision):<12}  {_fraction(*recall)}")
-    disagreements = [r for r in results if r["expected"] != r["predicted"]]
+    if mentioned:
+        lines += ["", "Personal mentions (review: inference about the candidate, or a fact from the posting?):"]
+        for r in mentioned:
+            lines.append(f"  {r['title']} — {r['company']}")
+            lines += [f"      {text}" for text in r["personal_mentions"]]
+    disagreements =[r for r in results if r["expected"] != r["predicted"]]
     if disagreements:
         lines += ["", f"Disagreements ({len(disagreements)}):"]
         for r in disagreements:
