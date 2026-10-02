@@ -21,7 +21,7 @@ FETCHERS = {
     "ashby": ashby.fetch_jobs,
 }
 
-MAX_SCORE_ATTEMPTS = 3  # failed runs for one job before it is left unscored for good
+MAX_SCORE_ATTEMPTS = 2  # failed runs for one job before it is left unscored for good: one retry, no more
 
 
 @dataclass

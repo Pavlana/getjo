@@ -341,42 +341,42 @@ class RunRealTest(unittest.TestCase):
         attempts = dict(self._read_all("SELECT id, score_attempts FROM jobs"))
         self.assertEqual(attempts, {"greenhouse:Acme:1": 0, "greenhouse:Acme:2": 1, "greenhouse:Acme:3": 1})
 
-    def test_gives_up_after_three_failed_runs(self, mock_load, mock_connect, mock_send, mock_score, _):
+    def test_gives_up_after_two_failed_runs(self, mock_load, mock_connect, mock_send, mock_score, _):
         self._wire(mock_load, mock_connect)
         mock_score.return_value = unscored()
 
-        for _run in range(3):
+        for _run in range(2):
             with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
                 with self.assertLogs("jobs.radar", level="INFO") as logs:
                     run(dry_run=False)
-        self.assertTrue(any("giving up on greenhouse:Acme:1 after 3 tries" in line for line in logs.output))
+        self.assertTrue(any("giving up on greenhouse:Acme:1 after 2 tries" in line for line in logs.output))
         self.assertIn("gave_up=1", logs.output[-1])
 
         with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
             run(dry_run=False)
 
-        self.assertEqual(mock_score.call_count, 3)
+        self.assertEqual(mock_score.call_count, 2)
         self.assertIsNone(self._score_of("greenhouse:Acme:1"))
-        self.assertEqual(self._read_one("SELECT score_attempts FROM jobs")[0], 3)
+        self.assertEqual(self._read_one("SELECT score_attempts FROM jobs")[0], 2)
 
     def test_failed_send_counts_as_a_try(self, mock_load, mock_connect, mock_send, mock_score, _):
         self._wire(mock_load, mock_connect)
         mock_score.return_value = scored(9)
         mock_send.side_effect = Exception("message rejected")
 
-        for _run in range(4):
+        for _run in range(3):
             with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
                 run(dry_run=False)
 
-        self.assertEqual(mock_score.call_count, 3)
-        self.assertEqual(mock_send.call_count, 3)
+        self.assertEqual(mock_score.call_count, 2)
+        self.assertEqual(mock_send.call_count, 2)
         self.assertIsNone(self._score_of("greenhouse:Acme:1"))
 
     def test_successful_score_on_last_try_is_kept(self, mock_load, mock_connect, mock_send, mock_score, _):
         self._wire(mock_load, mock_connect)
-        mock_score.side_effect = [unscored(), unscored(), scored(8)]
+        mock_score.side_effect = [unscored(), scored(8)]
 
-        for _run in range(3):
+        for _run in range(2):
             with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
                 run(dry_run=False)
 

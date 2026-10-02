@@ -6,7 +6,7 @@ This document follows one job through that process, in the order the code runs i
 
 ```mermaid
 flowchart TD
-  A[Job passes the filter<br>and is stored] --> B{Score still empty<br>and fewer than 3 tries?}
+  A[Job passes the filter<br>and is stored] --> B{Score still empty<br>and fewer than 2 failed tries?}
   B -- no --> Z[Skip: already scored,<br>or given up]
   B -- yes --> C[Count one try]
   C --> D[Build the prompt:<br>CV + rubric + dealbreakers in system,<br>posting in user]
@@ -145,9 +145,9 @@ Worked example, for a posting that contains this sentence:
 
 `_score_and_notify()` in `jobs/radar.py` decides what happens with the result.
 
-**Which jobs are scored.** Every job that matches the filter in the current run, has no score yet, and has been tried fewer than 3 times (`MAX_SCORE_ATTEMPTS`). A job is never scored again once it has a score, which is also what prevents duplicate notifications.
+**Which jobs are scored.** Every job that matches the filter in the current run, has no score yet, and has failed fewer than 2 times (`MAX_SCORE_ATTEMPTS`). A job is never scored again once it has a score, which is also what prevents duplicate notifications.
 
-**Counting tries.** A job's `score_attempts` increases by one only when the job itself fails: two unusable replies, a job error, or a failed send. A successful score counts nothing. After its third failed run, the job is logged ("giving up on … after 3 tries") and left unscored permanently, so one problematic job costs at most 3 runs × 2 calls.
+**Counting tries.** A job's `score_attempts` increases by one only when the job itself fails: two unusable replies, a job error, or a failed send. A successful score counts nothing. A failed job gets one more chance on the next run; after its second failed run it is logged ("giving up on … after 2 tries") and left unscored permanently, so one problematic job costs at most 2 runs × 2 calls.
 
 **Sending.** A score at or above `notify_threshold` sends the job to Telegram as plain text:
 
