@@ -48,12 +48,31 @@ python -m unittest               # test suite; no network, fixtures in tests/fix
 
 `scripts/run_radar.sh` loads `.env` and runs the radar once; `scripts/com.getjo.radar.plist` runs it daily at 09:00. Output is appended to `data/radar.log`.
 
+Install (from the repo root, after Setup; `.env` and `.venv` must exist):
+
 ```bash
 sed "s|REPO_DIR|$PWD|g" scripts/com.getjo.radar.plist > ~/Library/LaunchAgents/com.getjo.radar.plist
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.getjo.radar.plist
-launchctl kickstart gui/$(id -u)/com.getjo.radar     # optional: run once now to check
+```
 
-launchctl bootout gui/$(id -u)/com.getjo.radar       # uninstall
+The job stays installed across restarts; launchd reloads `~/Library/LaunchAgents/` at login.
+
+Check and test:
+
+```bash
+launchctl print gui/$(id -u)/com.getjo.radar | grep -E "state|runs|last exit"   # loaded? last exit code?
+launchctl kickstart gui/$(id -u)/com.getjo.radar                               # run once now
+tail -f data/radar.log                                                          # follow the output
+sqlite3 data/jobs.db "SELECT * FROM runs ORDER BY id DESC LIMIT 3"              # recorded runs
+```
+
+Change the schedule: edit `scripts/com.getjo.radar.plist`, then uninstall and install again.
+
+Uninstall:
+
+```bash
+launchctl bootout gui/$(id -u)/com.getjo.radar
+rm ~/Library/LaunchAgents/com.getjo.radar.plist
 ```
 
 A run missed while the Mac is asleep starts on wake; a run missed while it is shut down is skipped.
