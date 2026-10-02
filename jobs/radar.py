@@ -78,7 +78,8 @@ def _fetch_matches(targets: list[dict], filter_cfg: dict) -> tuple[list[dict], l
 def _message(job: dict, result: dict) -> str:
     # Plain text: Telegram's Markdown/HTML modes reject a title containing a stray _ or *.
     place = f"{job['company']} · {job['location']}" if job["location"] else job["company"]
-    return f"{result['score']}/10 · {job['title']}\n{place}\n{result['reasons'][0]}\n{job['url']}"
+    top = (result["reasons"] or result["red_flags"] or ["(no reason given)"])[0]
+    return f"{result['score']}/10 · {job['title']}\n{place}\n{top}\n{job['url']}"
 
 
 def _score_one(
@@ -92,7 +93,7 @@ def _score_one(
     """
     try:
         result, completions = score_with_retry(
-            job, cv_text, scoring_cfg["rubric"],
+            job, cv_text, scoring_cfg["rubric"], scoring_cfg.get("dealbreakers", []),
             model=scoring_cfg["model"], api_key=env["ANTHROPIC_API_KEY"],
         )
     except Exception as e:  # one job failing must not stop the run

@@ -139,6 +139,16 @@ class ScoreCasesTest(unittest.TestCase):
             score_cases([{"job_id": "missing-job", "expected": "skip"}], SCORING, "key")
         mock_score.assert_not_called()
 
+    def test_result_with_no_reasons_or_red_flags_is_reported(self, mock_connect, mock_score, _):
+        mock_connect.side_effect = lambda: real_connect(self.db_path)
+        mock_score.return_value = ({"score": 8, "reasons": [], "red_flags": []}, [])
+
+        results, cost = score_cases(
+            [{"job_id": "j1", "expected": "skip", "title": "AI Engineer", "company": "Acme"}], SCORING, "key"
+        )
+
+        self.assertIn("(no reasons or red flags given)", report(results, cost, SCORING))
+
     def test_unscored_case_counts_as_disagreement(self, mock_connect, mock_score, _):
         mock_connect.side_effect = lambda: real_connect(self.db_path)
         mock_score.return_value = (None, [Completion("bad", 1, 1, 0.004), Completion("bad", 1, 1, 0.004)])

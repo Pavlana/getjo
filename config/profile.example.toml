@@ -23,3 +23,10 @@ rubric = [
   "Seniority level matches my experience",
   "Location and working pattern suit me",
 ]
+
+# Hard rules, not preferences: if the posting clearly states one of these, the score is 3 or lower.
+# Optional; leave empty for none.
+dealbreakers = [
+  "Requires speaking a language other than English",
+  "Travel of 25% or more",
+]

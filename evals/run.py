@@ -58,7 +58,9 @@ def _claude_note(result: dict | None) -> str:
         return "(no usable reply after two tries)"
     if result["red_flags"]:
         return f"red flag: {result['red_flags'][0]}"
-    return f"reason: {result['reasons'][0]}"
+    if result["reasons"]:
+        return f"reason: {result['reasons'][0]}"
+    return "(no reasons or red flags given)"
 
 
 def score_cases(cases: list[dict], scoring_cfg: dict, api_key: str) -> tuple[list[dict], float]:
@@ -72,7 +74,8 @@ def score_cases(cases: list[dict], scoring_cfg: dict, api_key: str) -> tuple[lis
             if job is None:
                 raise ConfigError(f"case {case['job_id']} is not in data/jobs.db")
             result, completions = score_with_retry(
-                job, cv_text, scoring_cfg["rubric"], model=scoring_cfg["model"], api_key=api_key
+                job, cv_text, scoring_cfg["rubric"], scoring_cfg.get("dealbreakers", []),
+                model=scoring_cfg["model"], api_key=api_key,
             )
             cost += sum(c.cost or 0 for c in completions)
             score = result["score"] if result else None
@@ -91,7 +94,8 @@ def report(results: list[dict], cost: float, scoring_cfg: dict) -> str:
     metrics = summarize(results)
     lines = [
         f"Eval: {len(results)} cases · model {scoring_cfg['model']} · apply at score >= "
-        f"{scoring_cfg['notify_threshold']}, skip at <= {SKIP_MAX}",
+        f"{scoring_cfg['notify_threshold']}, skip at <= {SKIP_MAX} · "
+        f"{len(scoring_cfg.get('dealbreakers', []))} dealbreakers",
         f"Agreement:        {_fraction(*metrics['agreement'])}",
         f"Apply precision:  {_fraction(*metrics['apply_precision'])}   of jobs Claude would send, you'd apply to",
         f"Apply recall:     {_fraction(*metrics['apply_recall'])}   of jobs you'd apply to, Claude would send",

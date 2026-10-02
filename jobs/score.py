@@ -21,7 +21,7 @@ You score job postings for one candidate. Compare the posting against the candid
 Rubric (one criterion per line):
 {rubric}
 
-Candidate CV:
+{dealbreakers}Candidate CV:
 <cv>
 {cv}
 </cv>
@@ -34,6 +34,12 @@ Reply with exactly this JSON shape, with no markdown fences and no text before o
 - reasons: 1 to 3 short sentences on how well the role fits the CV and rubric, most important first.
 - red_flags: short concerns such as a seniority mismatch, location, visa, or a research-heavy role; an empty list if there are none.
 - score: an integer from 1 (no fit) to 10 (excellent fit)."""
+
+DEALBREAKERS_TEMPLATE = """\
+Dealbreakers. If the posting clearly states any of these, the score must be 3 or lower and the first red flag must name the dealbreaker. Apply one only when the posting says it; don't infer it from something the posting leaves out.
+{items}
+
+"""
 
 USER_TEMPLATE = """\
 <job>
@@ -52,10 +58,15 @@ def load_cv(path: Path = CV_PATH) -> str:
     return path.read_text()
 
 
-def build_prompt(job: dict, cv_text: str, rubric: list[str]) -> tuple[str, str]:
-    """Return (system, user). Trusted CV and rubric go in system; the untrusted posting in user."""
+def _bullets(lines: list[str]) -> str:
+    return "\n".join(f"- {line}" for line in lines)
+
+
+def build_prompt(job: dict, cv_text: str, rubric: list[str], dealbreakers: list[str]) -> tuple[str, str]:
+    """Return (system, user). Trusted CV, rubric and dealbreakers go in system; the untrusted posting in user."""
     system = SYSTEM_TEMPLATE.format(
-        rubric="\n".join(f"- {line}" for line in rubric),
+        rubric=_bullets(rubric),
+        dealbreakers=DEALBREAKERS_TEMPLATE.format(items=_bullets(dealbreakers)) if dealbreakers else "",
         cv=cv_text.strip(),
     )
     user = USER_TEMPLATE.format(
@@ -67,9 +78,11 @@ def build_prompt(job: dict, cv_text: str, rubric: list[str]) -> tuple[str, str]:
     return system, user
 
 
-def score_job(job: dict, cv_text: str, rubric: list[str], *, model: str, api_key: str) -> Completion:
+def score_job(
+    job: dict, cv_text: str, rubric: list[str], dealbreakers: list[str], *, model: str, api_key: str
+) -> Completion:
     """Ask Claude to score one job. Returns the raw completion; parsing is the caller's job."""
-    system, user = build_prompt(job, cv_text, rubric)
+    system, user = build_prompt(job, cv_text, rubric, dealbreakers)
     return complete(system, user, MAX_TOKENS, model=model, api_key=api_key, temperature=TEMPERATURE)
 
 
@@ -95,7 +108,8 @@ def parse_score(text: str) -> dict | None:
     # bool is a subclass of int in Python, so True would otherwise pass as a score of 1
     if not isinstance(score, int) or isinstance(score, bool) or not 1 <= score <= 10:
         return None
-    if not _is_str_list(reasons) or not reasons:
+    # reasons may be empty: when a dealbreaker applies, Claude often puts everything in red_flags
+    if not _is_str_list(reasons):
         return None
     if not _is_str_list(red_flags):
         return None
@@ -103,7 +117,7 @@ def parse_score(text: str) -> dict | None:
 
 
 def score_with_retry(
-    job: dict, cv_text: str, rubric: list[str], *, model: str, api_key: str
+    job: dict, cv_text: str, rubric: list[str], dealbreakers: list[str], *, model: str, api_key: str
 ) -> tuple[dict | None, list[Completion]]:
     """Score a job; on invalid output ask once more. None means unscored.
 
@@ -111,7 +125,7 @@ def score_with_retry(
     """
     completions = []
     for attempt in (1, 2):
-        completion = score_job(job, cv_text, rubric, model=model, api_key=api_key)
+        completion = score_job(job, cv_text, rubric, dealbreakers, model=model, api_key=api_key)
         completions.append(completion)
         result = parse_score(completion.text)
         if result is not None:

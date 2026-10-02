@@ -17,7 +17,10 @@ PROFILE = {
         "locations": ["london"],
         "remote_places": ["united states", "us", "texas", "new mexico", "united kingdom", "denmark"],
     },
-    "scoring": {"model": "claude-haiku-4-5", "notify_threshold": 7, "rubric": ["LLM work is core"]},
+    "scoring": {
+        "model": "claude-haiku-4-5", "notify_threshold": 7,
+        "rubric": ["LLM work is core"], "dealbreakers": ["Travel of 25% or more"],
+    },
 }
 
 TARGETS = [
@@ -125,6 +128,12 @@ class MessageTest(unittest.TestCase):
         lines = _message(make_job(1, location=""), self.RESULT).splitlines()
         self.assertEqual(lines[1], "Acme")
 
+    def test_no_reasons_falls_back_to_red_flag_then_placeholder(self):
+        no_reasons = {**self.RESULT, "reasons": []}
+        self.assertEqual(_message(make_job(1), no_reasons).splitlines()[2], "visa")
+        nothing = {**self.RESULT, "reasons": [], "red_flags": []}
+        self.assertEqual(_message(make_job(1), nothing).splitlines()[2], "(no reason given)")
+
 
 @mock.patch("jobs.radar.score_with_retry")
 @mock.patch("jobs.radar.notify.send_telegram")
@@ -197,6 +206,19 @@ class RunRealTest(unittest.TestCase):
             run(dry_run=False)
         mock_score.assert_not_called()
         mock_send.assert_not_called()
+
+    def test_scoring_gets_cv_rubric_and_dealbreakers_from_profile(
+        self, mock_load, mock_connect, mock_send, mock_score, _
+    ):
+        self._wire(mock_load, mock_connect)
+        mock_score.return_value = scored(5)
+
+        with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
+            run(dry_run=False)
+
+        args, kwargs = mock_score.call_args
+        self.assertEqual(args[1:], ("cv text", ["LLM work is core"], ["Travel of 25% or more"]))
+        self.assertEqual(kwargs, {"model": "claude-haiku-4-5", "api_key": "a"})
 
     def test_below_threshold_is_stored_but_not_notified(self, mock_load, mock_connect, mock_send, mock_score, _):
         self._wire(mock_load, mock_connect)
