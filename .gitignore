@@ -12,3 +12,4 @@ __pycache__/
 config/targets.toml
 config/profile.toml
 evals/cases/scoring.jsonl
+docs/decisions.md

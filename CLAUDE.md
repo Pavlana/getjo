@@ -10,7 +10,7 @@ It is also my learning project for AI system design. I'm an experienced cloud en
 2. Implement the smallest change that meets the task's acceptance criteria in `docs/ROADMAP.md`. No speculative features.
 3. Add or update tests, then run `python -m unittest`.
 4. Finish with a 3–5 line summary and a suggested commit message. Do not commit or push unless I ask.
-5. When a decision is worth remembering (a schema, a retry policy, a model choice), add one line to the Decisions section of `docs/design.md`.
+5. When a decision is worth remembering (a schema, a retry policy, a model choice), add one line to `docs/decisions.md` (gitignored, private: it may name real companies and my preferences). Keep `docs/design.md` free of anything personal.
 6. If I ask "why", explain the concept briefly with a pointer to where it shows up in this code.
 
 ## Technical rules
@@ -42,7 +42,8 @@ jobs/      radar.py (fetch -> filter -> store -> score -> notify)
 evals/     cases/*.jsonl, run.py
 tests/     unit tests + fixtures/
 config/    targets.toml (companies), profile.toml (filters, rubric), cv.md — all gitignored; *.example.toml are committed templates
-docs/      ROADMAP.md (iterations and tasks), design.md (diagram + decisions)
+docs/      ROADMAP.md (iterations and tasks), design.md (diagram, job shape), scoring.md (how scoring works),
+           decisions.md (decision log, gitignored)
 ```
 
 ## Commands
