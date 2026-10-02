@@ -6,12 +6,12 @@ caller wants. Employers already fetched from their own board are skipped, so a j
 """
 
 import logging
-import re
 from collections.abc import Callable
 from datetime import datetime, timezone
 from urllib.parse import urlencode
 
 from core.http import get_with_retry
+from core.match import names_any
 from sources.html_text import html_to_text
 
 logger = logging.getLogger(__name__)
@@ -20,16 +20,10 @@ API = "https://www.reed.co.uk/api/1.0"
 PAGE_SIZE = 100  # the most Reed returns per request
 
 
-def _names_any(text: str, names: list[str]) -> bool:
-    """True if text contains any name as a whole word or phrase, so "Wise" doesn't match "Otherwise"."""
-    text = text.lower()
-    return any(re.search(rf"(?<![a-z0-9]){re.escape(n.lower())}(?![a-z0-9])", text) for n in names)
-
-
 def _location(location_name: str, searched: str) -> str:
     """Reed sometimes gives a postcode ("WC1B5HA"); the search already limited results to near
     `searched`, so say so, or the location filter would drop them."""
-    if _names_any(location_name, [searched]):
+    if names_any(location_name, [searched]):
         return location_name
     return f"{location_name}, {searched}" if location_name else searched
 
@@ -89,7 +83,7 @@ def fetch_jobs(
 
     jobs = []
     for job_id, raw in found.items():
-        if _names_any(raw["employerName"], list(skip_employers)):
+        if names_any(raw["employerName"], list(skip_employers)):
             continue
         job = parse_result(raw, location, now)
         if wanted(job["title"]):

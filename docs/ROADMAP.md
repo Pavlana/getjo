@@ -98,8 +98,8 @@ Tick a box only when its acceptance criteria pass.
 - [x] `sources/smartrecruiters.py`: official public postings API; details only for titles that pass the title filter
 - [x] `sources/workable.py`: official widget API
 - [x] Reed search source: free API key, keyword + location search, details endpoint for the full description; check description length live before building. Same job from two sources (a search service and the company's own board) is notified once
-- [ ] Jooble: request an API key, check fields, description length and terms; build a source only if descriptions are usable for scoring
-- [ ] DevITjobs UK: check terms of use for the public jobs list; if allowed, use it for discovery (companies hiring for matching titles) and, if job details are reachable, as a source
+- [x] Jooble: request an API key, check fields, description length and terms; build a source only if descriptions are usable for scoring. Evaluated, not built: ~280-character excerpts with no details endpoint, country-only locations
+- [x] DevITjobs UK: check terms of use for the public jobs list; if allowed, use it for discovery (companies hiring for matching titles) and, if job details are reachable, as a source
 - [ ] Adzuna for discovery: search returns only a snippet, too short for scoring; use it to find companies hiring for matching titles in London and add their boards to targets
 
 **Acceptance:** every reachable target is fetched in a normal run, and at least one search-based source adds jobs from companies not in `targets.toml`, with no job notified twice.

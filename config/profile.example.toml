@@ -44,3 +44,9 @@ keywords = ["AI engineer", "applied AI", "LLM engineer", "forward deployed engin
 location = "London"            # Reed searches within 10 miles of this place
 direct_employers_only = true   # false adds recruitment-agency ads (often without the employer's name)
 exclude_employers = ["Example Training Ltd"]
+
+# Optional: read DevITjobs.uk (UK tech jobs; official RSS feed for descriptions, the site's job list
+# for locations). No key needed. Employers that are targets with a readable board are skipped.
+[devitjobs]
+enabled = true
+exclude_employers = []   # e.g. recruitment agencies, if they get too noisy

@@ -525,6 +525,39 @@ class RunRealTest(unittest.TestCase):
         self.assertIn("reed: 503 Service Unavailable", self._read_one("SELECT errors FROM runs")[0])
         self.assertEqual(len(job_sends(mock_send)), 1)  # the board source still went through
 
+    @mock.patch("jobs.radar.devitjobs.fetch_jobs")
+    def test_devitjobs_only_when_enabled_and_skips_own_board_employers(
+        self, mock_devit, mock_load, mock_connect, mock_send, mock_score, _
+    ):
+        mock_connect.side_effect = lambda: real_connect(self.db_path)
+        mock_devit.return_value = [make_job(7, company="NewCo")]
+        mock_score.return_value = scored(8)
+
+        mock_load.return_value = {"targets": TARGETS, "profile": PROFILE}
+        with fetchers(greenhouse=mock.Mock(return_value=[])):
+            run(dry_run=False)
+        mock_devit.assert_not_called()  # no [devitjobs] section
+
+        profile = {**PROFILE, "devitjobs": {"enabled": True, "exclude_employers": ["Agency Ltd"]}}
+        mock_load.return_value = {"targets": TARGETS, "profile": profile}
+        with fetchers(greenhouse=mock.Mock(return_value=[])):
+            run(dry_run=False)
+
+        mock_devit.assert_called_once_with(skip_employers=["Acme", "Agency Ltd"])
+        self.assertEqual(len(job_sends(mock_send)), 1)
+
+    @mock.patch("jobs.radar.devitjobs.fetch_jobs", side_effect=Exception("feed unavailable"))
+    def test_devitjobs_failure_is_recorded_and_run_continues(
+        self, mock_devit, mock_load, mock_connect, mock_send, mock_score, _
+    ):
+        mock_connect.side_effect = lambda: real_connect(self.db_path)
+        mock_load.return_value = {"targets": TARGETS, "profile": {**PROFILE, "devitjobs": {"enabled": True}}}
+
+        with fetchers(greenhouse=mock.Mock(return_value=[])):
+            self.assertTrue(run(dry_run=False))
+
+        self.assertIn("devitjobs: feed unavailable", self._read_one("SELECT errors FROM runs")[0])
+
     def test_summary_sent_even_when_nothing_is_new(self, mock_load, mock_connect, mock_send, mock_score, _):
         self._wire(mock_load, mock_connect)
         mock_score.return_value = scored(8)

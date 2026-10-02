@@ -3,7 +3,6 @@
 import argparse
 import logging
 import os
-import re
 import sqlite3
 import sys
 from dataclasses import dataclass
@@ -11,8 +10,9 @@ from datetime import datetime, timezone
 
 from core import config, notify, store
 from core.llm import ServiceError
+from core.match import names_any
 from jobs.score import load_cv, score_with_retry
-from sources import ashby, greenhouse, lever, reed, smartrecruiters, workable, workday
+from sources import ashby, devitjobs, greenhouse, lever, reed, smartrecruiters, workable, workday
 
 logger = logging.getLogger(__name__)
 
@@ -42,16 +42,11 @@ class Tally:
     stopped: str | None = None  # why scoring stopped early, if a service error stopped it
 
 
-def _names_any(text: str, terms: list[str]) -> bool:
-    """True if text contains any term as a whole word or phrase, so "us" doesn't match "australia"."""
-    return any(re.search(rf"(?<![a-z0-9]){re.escape(term.lower())}(?![a-z0-9])", text) for term in terms)
-
-
 def title_matches(title: str, filter_cfg: dict) -> bool:
     """Title names an include keyword and no exclude keyword, as whole words: "rag" mustn't match
     "coverage", and excluding "intern" mustn't drop "International ..." titles."""
     title = title.lower()
-    return _names_any(title, filter_cfg["title_include"]) and not _names_any(title, filter_cfg["title_exclude"])
+    return names_any(title, filter_cfg["title_include"]) and not names_any(title, filter_cfg["title_exclude"])
 
 
 def matches_filter(job: dict, filter_cfg: dict) -> bool:
@@ -60,21 +55,26 @@ def matches_filter(job: dict, filter_cfg: dict) -> bool:
     if not title_matches(job["title"], filter_cfg):
         return False
     location = (job["location"] or "").lower()
-    if _names_any(location, filter_cfg["locations"]):
+    if names_any(location, filter_cfg["locations"]):
         return True
-    return "remote" in location and _names_any(location, filter_cfg.get("remote_places", []))
+    return "remote" in location and names_any(location, filter_cfg.get("remote_places", []))
 
 
 def _reachable(company: dict) -> bool:
     return company["source"] in FETCHERS and bool(company["board"])
 
 
+def _own_board_employers(targets: list[dict]) -> list[str]:
+    """Targets fetched from their own board. Search sources skip these employers, so the same job
+    isn't found twice; targets with no readable board are kept, since a search source may be the
+    only way to see their jobs."""
+    return [c["name"] for c in targets if _reachable(c)]
+
+
 def _fetch_reed(reed_cfg: dict | None, targets: list[dict], filter_cfg: dict, errors: list[str]) -> list[dict]:
     """Search Reed if the profile has a [reed] section and REED_API_KEY is set; otherwise skip.
 
     Reed is optional, unlike the Anthropic and Telegram keys, so a missing key doesn't stop the run.
-    Employers we already fetch from their own board are skipped, so the same job isn't found twice;
-    targets with no readable board are not skipped, since Reed may be the only way to see their jobs.
     """
     if not reed_cfg:
         return []
@@ -87,7 +87,7 @@ def _fetch_reed(reed_cfg: dict | None, targets: list[dict], filter_cfg: dict, er
             reed_cfg["keywords"], reed_cfg["location"], api_key,
             wanted=lambda title: title_matches(title, filter_cfg),
             direct_employers_only=reed_cfg.get("direct_employers_only", True),
-            skip_employers=[c["name"] for c in targets if _reachable(c)] + reed_cfg.get("exclude_employers", []),
+            skip_employers=_own_board_employers(targets) + reed_cfg.get("exclude_employers", []),
         )
     except Exception as e:  # one source failing must not stop the run
         logger.warning("fetch failed for reed: %s", e)
@@ -95,11 +95,22 @@ def _fetch_reed(reed_cfg: dict | None, targets: list[dict], filter_cfg: dict, er
         return []
 
 
-def _fetch_matches(
-    targets: list[dict], filter_cfg: dict, reed_cfg: dict | None = None
-) -> tuple[list[dict], list[str], int]:
-    """Fetch every target with a supported, configured source, then search Reed.
-    Return (matches, errors, fetched)."""
+def _fetch_devitjobs(cfg: dict | None, targets: list[dict], errors: list[str]) -> list[dict]:
+    """Read DevITjobs.uk if the profile has a [devitjobs] section with enabled = true."""
+    if not (cfg and cfg.get("enabled")):
+        return []
+    try:
+        return devitjobs.fetch_jobs(skip_employers=_own_board_employers(targets) + cfg.get("exclude_employers", []))
+    except Exception as e:  # one source failing must not stop the run
+        logger.warning("fetch failed for devitjobs: %s", e)
+        errors.append(f"devitjobs: {e}")
+        return []
+
+
+def _fetch_matches(targets: list[dict], profile: dict) -> tuple[list[dict], list[str], int]:
+    """Fetch every target with a supported, configured source, then the search sources (Reed,
+    DevITjobs). Return (matches, errors, fetched)."""
+    filter_cfg = profile["filter"]
     matches = []
     errors = []
     fetched = 0
@@ -121,9 +132,12 @@ def _fetch_matches(
         fetched += len(jobs)
         matches.extend(job for job in jobs if matches_filter(job, filter_cfg))
 
-    jobs = _fetch_reed(reed_cfg, targets, filter_cfg, errors)
-    fetched += len(jobs)
-    matches.extend(job for job in jobs if matches_filter(job, filter_cfg))
+    for jobs in (
+        _fetch_reed(profile.get("reed"), targets, filter_cfg, errors),
+        _fetch_devitjobs(profile.get("devitjobs"), targets, errors),
+    ):
+        fetched += len(jobs)
+        matches.extend(job for job in jobs if matches_filter(job, filter_cfg))
     return matches, errors, fetched
 
 
@@ -247,7 +261,7 @@ def run(dry_run: bool = False) -> bool:
     """Run once. Returns False if scoring had to stop early because of a service error."""
     started_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     cfg = config.load_config()
-    matches, errors, fetched = _fetch_matches(cfg["targets"], cfg["profile"]["filter"], cfg["profile"].get("reed"))
+    matches, errors, fetched = _fetch_matches(cfg["targets"], cfg["profile"])
 
     if dry_run:
         print(f"dry run: {fetched} jobs fetched, {len(matches)} match the filter")
