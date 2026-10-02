@@ -94,7 +94,10 @@ The dealbreaker section asks for **evidence**, not a particular score. It reques
 `complete()` in `core/llm.py` sends one HTTPS POST to `https://api.anthropic.com/v1/messages` using `requests`, with no SDK.
 
 - **Settings:** `max_tokens` 600 (the reply is a short JSON object) and `temperature` 0. Temperature controls randomness; at 0, the same job gets nearly the same score every time, so a changed score reflects a changed input rather than chance. It is not perfectly repeatable: two identical evaluation runs have differed on 2 of 20 jobs.
-- **Network failures:** each request has a 30-second timeout. A 429 (rate limit) or a 5xx (server error) is retried, up to 5 attempts in total, waiting 1, 2, 4 and 8 seconds between them. Any other 4xx (a bad request) fails immediately, because repeating it won't change the answer.
+- **Network failures:** each request has a 30-second timeout. A 429 (rate limit), a 5xx (server error) or a network error is retried, up to 5 attempts in total, waiting 1, 2, 4 and 8 seconds between them. Any other 4xx fails immediately, because repeating it won't change the answer.
+- **Two kinds of error.** A failed call raises one of two errors, each carrying the API's own error type and message (for example `400 invalid_request_error: …`):
+  - a **service error** means no request can succeed right now: an invalid key (401), no permission (403), no remaining credit (reported by the API as a 400 whose message mentions the credit balance), or a rate limit, server error or network failure that outlasted every retry;
+  - a **job error** means the API rejected this particular request, such as an over-long posting; other jobs are unaffected.
 - **Cost:** the reply reports input and output tokens, and `PRICING` in `core/llm.py` converts them to dollars. Haiku 4.5 costs $1 per million input tokens and $5 per million output tokens. A typical job uses ~2,600 tokens in and ~250 out: 2,600 × $1/M + 250 × $5/M ≈ $0.004. Each call is logged, and `radar.py` and the evaluation both report the total.
 
 ## 5. Validating the reply
@@ -144,7 +147,7 @@ Worked example, for a posting that contains this sentence:
 
 **Which jobs are scored.** Every job that matches the filter in the current run, has no score yet, and has been tried fewer than 3 times (`MAX_SCORE_ATTEMPTS`). A job is never scored again once it has a score, which is also what prevents duplicate notifications.
 
-**Counting tries.** Before scoring, the job's `score_attempts` increases by one, whatever happens next. After its third failed run, the job is logged ("giving up on … after 3 tries") and left unscored permanently, so one problematic job costs at most 3 runs × 2 calls ≈ $0.024.
+**Counting tries.** A job's `score_attempts` increases by one only when the job itself fails: two unusable replies, a job error, or a failed send. A successful score counts nothing. After its third failed run, the job is logged ("giving up on … after 3 tries") and left unscored permanently, so one problematic job costs at most 3 runs × 2 calls.
 
 **Sending.** A score at or above `notify_threshold` sends the job to Telegram as plain text:
 
@@ -159,7 +162,11 @@ The third line is the first reason, or the first red flag when there are no reas
 
 **Saving.** The score is written to the database only after the send succeeds. If Telegram fails, the job keeps an empty score and is tried again on the next run, instead of being recorded as scored but never delivered. A job below the threshold is saved immediately.
 
-**Failures.** An API error, an unusable reply or a failed send affects only that job: it is logged, added to `runs.errors`, and the run continues. Each run ends with a summary line, for example:
+**Failures.** A job error, an unusable reply or a failed send affects only that job: it is logged, added to `runs.errors`, and the run continues.
+
+A service error stops scoring for the rest of the run, because every remaining job would hit it too. One line is logged ("scoring stopped: … ; N jobs left for the next run"), one entry is added to `runs.errors`, and no job's tries are counted: the problem isn't any job's. The run still records itself and prints its summary, then exits with status 1 so a scheduler or alert can tell that scoring didn't finish. The remaining jobs are scored on the next run.
+
+Each run ends with a summary line, for example:
 
 ```text
 run complete: fetched=3871 matched=97 new=12 scored=11 failed=1 gave_up=0 notified=4 cost=$0.0489

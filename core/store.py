@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     description TEXT,
     first_seen  TEXT NOT NULL,      -- ISO timestamp, set on insert
     score       INTEGER,            -- null until scored
-    score_attempts INTEGER NOT NULL DEFAULT 0  -- runs that tried to score this job
+    score_attempts INTEGER NOT NULL DEFAULT 0  -- runs in which scoring this job failed
 );
 
 CREATE TABLE IF NOT EXISTS runs (

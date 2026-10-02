@@ -6,9 +6,9 @@ from pathlib import Path
 from unittest import mock
 
 from core.config import ConfigError
-from core.llm import Completion
+from core.llm import Completion, ServiceError
 from core.store import connect as real_connect
-from jobs.radar import _message, matches_filter, run
+from jobs.radar import _message, main, matches_filter, run
 
 PROFILE = {
     "filter": {
@@ -188,6 +188,12 @@ class RunRealTest(unittest.TestCase):
         conn.close()
         return row
 
+    def _read_all(self, sql: str) -> list:
+        conn = real_connect(self.db_path)
+        rows = conn.execute(sql).fetchall()
+        conn.close()
+        return rows
+
     def _score_of(self, job_id: str):
         return self._read_one("SELECT score FROM jobs WHERE id = ?", (job_id,))[0]
 
@@ -287,6 +293,53 @@ class RunRealTest(unittest.TestCase):
         summary = logs.output[-1]
         self.assertIn("scored=1 failed=1 gave_up=0 notified=1", summary)
         self.assertIn("cost=$0.0120", summary)
+
+    def test_service_error_stops_scoring_without_counting_tries(
+        self, mock_load, mock_connect, mock_send, mock_score, _
+    ):
+        self._wire(mock_load, mock_connect)
+        credit = ServiceError("400 invalid_request_error: Your credit balance is too low")
+        mock_score.side_effect = [scored(5), credit, scored(8)]
+        jobs = [make_job(1), make_job(2), make_job(3)]
+
+        with fetchers(greenhouse=mock.Mock(return_value=jobs)):
+            with self.assertLogs("jobs.radar", level="INFO") as logs:
+                completed = run(dry_run=False)
+
+        self.assertFalse(completed)
+        self.assertEqual(mock_score.call_count, 2)  # job 3 never tried
+        self.assertEqual(self._score_of("greenhouse:Acme:1"), 5)
+        for job_id in ("greenhouse:Acme:2", "greenhouse:Acme:3"):
+            self.assertEqual(self._read_one("SELECT score, score_attempts FROM jobs WHERE id = ?", (job_id,)), (None, 0))
+        errors = self._read_one("SELECT errors FROM runs")[0].splitlines()
+        self.assertEqual(errors, ["scoring stopped: 400 invalid_request_error: Your credit balance is too low"])
+        self.assertTrue(any("2 jobs left for the next run" in line for line in logs.output))
+        self.assertIn("(scoring stopped early)", logs.output[-1])
+
+    def test_jobs_stopped_by_a_service_error_are_scored_next_run(
+        self, mock_load, mock_connect, mock_send, mock_score, _
+    ):
+        self._wire(mock_load, mock_connect)
+        mock_score.side_effect = [ServiceError("401 authentication_error: invalid x-api-key"), scored(8), scored(4)]
+
+        with fetchers(greenhouse=mock.Mock(return_value=[make_job(1), make_job(2)])):
+            self.assertFalse(run(dry_run=False))
+        with fetchers(greenhouse=mock.Mock(return_value=[make_job(1), make_job(2)])):
+            self.assertTrue(run(dry_run=False))
+
+        self.assertEqual(self._score_of("greenhouse:Acme:1"), 8)
+        self.assertEqual(self._score_of("greenhouse:Acme:2"), 4)
+
+    def test_tries_count_job_failures_only(self, mock_load, mock_connect, mock_send, mock_score, _):
+        self._wire(mock_load, mock_connect)
+        mock_score.side_effect = [scored(8), unscored(), Exception("400 invalid_request_error: prompt is too long")]
+        jobs = [make_job(1), make_job(2), make_job(3)]
+
+        with fetchers(greenhouse=mock.Mock(return_value=jobs)):
+            self.assertTrue(run(dry_run=False))
+
+        attempts = dict(self._read_all("SELECT id, score_attempts FROM jobs"))
+        self.assertEqual(attempts, {"greenhouse:Acme:1": 0, "greenhouse:Acme:2": 1, "greenhouse:Acme:3": 1})
 
     def test_gives_up_after_three_failed_runs(self, mock_load, mock_connect, mock_send, mock_score, _):
         self._wire(mock_load, mock_connect)
@@ -389,6 +442,22 @@ class RunRealTest(unittest.TestCase):
             with fetchers(greenhouse=mock.Mock(return_value=[make_job(1)])):
                 with self.assertRaises(ConfigError):
                     run(dry_run=False)
+
+
+class MainExitCodeTest(unittest.TestCase):
+    @mock.patch("sys.argv", ["radar"])
+    @mock.patch("jobs.radar.run", return_value=True)
+    def test_completed_run_exits_zero(self, _run):
+        with self.assertRaises(SystemExit) as exit_:
+            main()
+        self.assertEqual(exit_.exception.code, 0)
+
+    @mock.patch("sys.argv", ["radar"])
+    @mock.patch("jobs.radar.run", return_value=False)
+    def test_stopped_run_exits_non_zero(self, _run):
+        with self.assertRaises(SystemExit) as exit_:
+            main()
+        self.assertEqual(exit_.exception.code, 1)
 
 
 if __name__ == "__main__":

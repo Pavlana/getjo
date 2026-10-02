@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from core import config, notify, store
+from core.llm import ServiceError
 from jobs.score import load_cv, score_with_retry
 from sources import ashby, greenhouse, lever
 
@@ -20,17 +21,18 @@ FETCHERS = {
     "ashby": ashby.fetch_jobs,
 }
 
-MAX_SCORE_ATTEMPTS = 3  # runs that may try to score one job before it is left unscored for good
+MAX_SCORE_ATTEMPTS = 3  # failed runs for one job before it is left unscored for good
 
 
 @dataclass
 class Tally:
     scored: int = 0
-    failed: int = 0  # unusable output, API error or failed send; tried again next run
+    failed: int = 0  # unusable output, a request the API rejected, or a failed send; tried again next run
     gave_up: int = 0  # failed for the MAX_SCORE_ATTEMPTS-th time; never tried again
     notified: int = 0
     cost: float = 0.0
     unpriced_calls: int = 0  # calls whose model isn't in core/llm.PRICING
+    stopped: str | None = None  # why scoring stopped early, if a service error stopped it
 
 
 def _names_any(text: str, terms: list[str]) -> bool:
@@ -90,6 +92,7 @@ def _score_one(
 
     The score is written after the send succeeds: if Telegram fails, the job stays unscored
     and is tried again next run instead of being stored as scored but never delivered.
+    A ServiceError (the API can't serve anyone) is raised to the caller, which stops scoring.
     """
     try:
         result, completions = score_with_retry(
@@ -97,6 +100,8 @@ def _score_one(
             model=scoring_cfg["model"], api_key=env["ANTHROPIC_API_KEY"],
             facts=scoring_cfg.get("candidate_facts", []),
         )
+    except ServiceError:
+        raise
     except Exception as e:  # one job failing must not stop the run
         logger.warning("scoring failed for %s: %s", job["id"], e)
         errors.append(f"score {job['id']}: {e}")
@@ -132,20 +137,27 @@ def _score_and_notify(
     """Score every matching job that has no score yet and tries left; notify those above the threshold.
 
     A job is notified only when its score goes from NULL to a number, and a scored job is never
-    scored again, so no job is notified twice. Every run that tries a job counts as one attempt,
-    whatever the outcome; after MAX_SCORE_ATTEMPTS the job is left unscored for good, which caps
-    what a job that never scores can cost.
+    scored again, so no job is notified twice. A run in which a job itself fails counts as one try;
+    after MAX_SCORE_ATTEMPTS the job is left unscored for good, which caps what a job that never
+    scores can cost. A service error (no credit, bad key, API down) stops scoring for this run and
+    counts against no job: the problem isn't any job's, and every remaining job would hit it too.
     """
     cv_text = load_cv()
     tally = Tally()
-    for job in matches:
-        score, attempts = store.get_scoring_state(conn, job["id"])
-        if score is not None or attempts >= MAX_SCORE_ATTEMPTS:
+    pending = [job for job in matches if _needs_scoring(conn, job)]
+    for done, job in enumerate(pending):
+        try:
+            stored = _score_one(conn, job, cv_text, scoring_cfg, env, errors, tally)
+        except ServiceError as e:
+            tally.stopped = str(e)
+            logger.error("scoring stopped: %s; %d jobs left for the next run", e, len(pending) - done)
+            errors.append(f"scoring stopped: {e}")
+            break
+        if stored:
+            tally.scored += 1
             continue
         attempt = store.add_score_attempt(conn, job["id"])
-        if _score_one(conn, job, cv_text, scoring_cfg, env, errors, tally):
-            tally.scored += 1
-        elif attempt >= MAX_SCORE_ATTEMPTS:
+        if attempt >= MAX_SCORE_ATTEMPTS:
             logger.warning("giving up on %s after %d tries", job["id"], attempt)
             tally.gave_up += 1
         else:
@@ -153,7 +165,13 @@ def _score_and_notify(
     return tally
 
 
-def run(dry_run: bool = False) -> None:
+def _needs_scoring(conn: sqlite3.Connection, job: dict) -> bool:
+    score, attempts = store.get_scoring_state(conn, job["id"])
+    return score is None and attempts < MAX_SCORE_ATTEMPTS
+
+
+def run(dry_run: bool = False) -> bool:
+    """Run once. Returns False if scoring had to stop early because of a service error."""
     started_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     cfg = config.load_config()
     matches, errors, fetched = _fetch_matches(cfg["targets"], cfg["profile"]["filter"])
@@ -162,7 +180,7 @@ def run(dry_run: bool = False) -> None:
         print(f"dry run: {fetched} jobs fetched, {len(matches)} match the filter")
         for job in matches:
             print(f"  {job['title']} — {job['company']} ({job['location']}) {job['url']}")
-        return
+        return True
 
     env = config.require_env(["ANTHROPIC_API_KEY", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"])
     conn = store.connect()
@@ -185,9 +203,11 @@ def run(dry_run: bool = False) -> None:
     if tally.unpriced_calls:
         cost += f" (+{tally.unpriced_calls} calls with unknown pricing)"
     logger.info(
-        "run complete: fetched=%d matched=%d new=%d scored=%d failed=%d gave_up=%d notified=%d cost=%s",
+        "run complete: fetched=%d matched=%d new=%d scored=%d failed=%d gave_up=%d notified=%d cost=%s%s",
         fetched, len(matches), new_count, tally.scored, tally.failed, tally.gave_up, tally.notified, cost,
+        " (scoring stopped early)" if tally.stopped else "",
     )
+    return tally.stopped is None
 
 
 def main() -> None:
@@ -197,7 +217,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Fetch, filter, store, score and notify new job matches.")
     parser.add_argument("--dry-run", action="store_true", help="print matches; no database, LLM or Telegram")
     args = parser.parse_args()
-    run(dry_run=args.dry_run)
+    # A non-zero exit lets a scheduler or alert notice that scoring couldn't finish.
+    sys.exit(0 if run(dry_run=args.dry_run) else 1)
 
 
 if __name__ == "__main__":

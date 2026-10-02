@@ -3,7 +3,7 @@ from unittest import mock
 
 import requests
 
-from core.llm import complete
+from core.llm import JobError, ServiceError, complete
 
 API_KEY = "test-key"
 MODEL = "claude-haiku-4-5"
@@ -117,26 +117,68 @@ class CompleteTest(unittest.TestCase):
         mock_sleep.assert_called_once()
         self.assertEqual(result.text, '{"score": 8}')
 
-    @mock.patch("core.llm.time.sleep")
-    @mock.patch("core.llm.requests.post")
-    def test_non_retryable_4xx_raises_immediately(self, mock_post, mock_sleep):
-        mock_post.return_value = make_response(400)
+def api_error(error_type: str, message: str) -> dict:
+    return {"type": "error", "error": {"type": error_type, "message": message}}
 
-        with self.assertRaises(requests.HTTPError):
-            complete("s", "u", 500, model=MODEL, api_key=API_KEY)
 
+CREDIT = api_error("invalid_request_error", "Your credit balance is too low to access the Anthropic API.")
+
+
+@mock.patch("core.llm.time.sleep")
+@mock.patch("core.llm.requests.post")
+class ErrorTest(unittest.TestCase):
+    def _call(self):
+        return complete("s", "u", 500, model=MODEL, api_key=API_KEY)
+
+    def test_other_400_is_a_job_error_with_the_apis_explanation(self, mock_post, mock_sleep):
+        mock_post.return_value = make_response(400, api_error("invalid_request_error", "prompt is too long"))
+
+        with self.assertRaisesRegex(JobError, r"^400 invalid_request_error: prompt is too long$"):
+            self._call()
         self.assertEqual(mock_post.call_count, 1)
         mock_sleep.assert_not_called()
 
-    @mock.patch("core.llm.time.sleep")
-    @mock.patch("core.llm.requests.post")
-    def test_exhausts_retries_on_persistent_500(self, mock_post, mock_sleep):
-        mock_post.return_value = make_response(500)
+    def test_no_credit_is_a_service_error_and_not_retried(self, mock_post, mock_sleep):
+        mock_post.return_value = make_response(400, CREDIT)
 
-        with self.assertRaises(requests.HTTPError):
-            complete("s", "u", 500, model=MODEL, api_key=API_KEY)
+        with self.assertRaisesRegex(ServiceError, "credit balance is too low"):
+            self._call()
+        self.assertEqual(mock_post.call_count, 1)
 
+    def test_bad_key_and_no_permission_are_service_errors(self, mock_post, mock_sleep):
+        for status, error_type in ((401, "authentication_error"), (403, "permission_error")):
+            mock_post.return_value = make_response(status, api_error(error_type, "nope"))
+            with self.assertRaisesRegex(ServiceError, f"^{status} {error_type}: nope$"):
+                self._call()
+
+    def test_persistent_500_is_a_service_error_after_all_retries(self, mock_post, mock_sleep):
+        mock_post.return_value = make_response(500, api_error("api_error", "Internal server error"))
+
+        with self.assertRaisesRegex(ServiceError, "500 api_error"):
+            self._call()
         self.assertEqual(mock_post.call_count, 5)
+
+    def test_persistent_429_is_a_service_error_after_all_retries(self, mock_post, mock_sleep):
+        mock_post.return_value = make_response(429, api_error("rate_limit_error", "slow down"))
+
+        with self.assertRaises(ServiceError):
+            self._call()
+        self.assertEqual(mock_post.call_count, 5)
+
+    def test_persistent_network_failure_is_a_service_error(self, mock_post, mock_sleep):
+        mock_post.side_effect = requests.ConnectionError("unreachable")
+
+        with self.assertRaisesRegex(ServiceError, "network: unreachable"):
+            self._call()
+        self.assertEqual(mock_post.call_count, 5)
+
+    def test_error_without_a_json_body_still_reports_the_status(self, mock_post, mock_sleep):
+        resp = make_response(400)
+        resp.json.side_effect = ValueError("not json")
+        mock_post.return_value = resp
+
+        with self.assertRaisesRegex(JobError, r"^400 unknown_error$"):
+            self._call()
 
 
 if __name__ == "__main__":

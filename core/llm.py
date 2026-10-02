@@ -42,15 +42,44 @@ def _cost(model: str, input_tokens: int, output_tokens: int) -> float | None:
     return (input_tokens * rates["input"] + output_tokens * rates["output"]) / 1_000_000
 
 
+class LLMError(Exception):
+    """A failed call. The message includes the API's own error type and explanation when there is one."""
+
+
+class JobError(LLMError):
+    """The API rejected this particular request; other requests may still succeed."""
+
+
+class ServiceError(LLMError):
+    """No request can succeed right now: no credit, a bad key, no permission, or rate limits,
+    server errors or network failures that outlasted every retry."""
+
+
+def _error_from(response: requests.Response) -> LLMError:
+    try:
+        body = response.json()
+    except ValueError:
+        body = None
+    error = body.get("error", {}) if isinstance(body, dict) else {}
+    error_type = error.get("type", "unknown_error")
+    message = error.get("message") or ""
+    text = f"{response.status_code} {error_type}: {message}".rstrip(": ")
+    # Running out of credit is reported as an ordinary 400, so only its wording identifies it.
+    account_wide = response.status_code in (401, 403, 429) or response.status_code >= 500
+    if account_wide or "credit balance" in message.lower():
+        return ServiceError(text)
+    return JobError(text)
+
+
 def _post_with_retry(payload: dict, headers: dict) -> requests.Response:
-    """POST with a timeout; retry on 429/5xx with exponential backoff, capped."""
+    """POST with a timeout; retry on 429/5xx and network errors with exponential backoff, capped."""
     delay = BACKOFF_BASE
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             response = requests.post(API_URL, headers=headers, json=payload, timeout=TIMEOUT)
         except requests.RequestException as e:
             if attempt == MAX_RETRIES:
-                raise
+                raise ServiceError(f"network: {e}") from e
             logger.warning("anthropic request failed (%s), retrying in %.0fs", e, delay)
             time.sleep(delay)
             delay *= 2
@@ -60,7 +89,7 @@ def _post_with_retry(payload: dict, headers: dict) -> requests.Response:
             return response
         if response.status_code == 429 or response.status_code >= 500:
             if attempt == MAX_RETRIES:
-                response.raise_for_status()
+                raise _error_from(response)
             logger.warning(
                 "anthropic returned %d, retrying in %.0fs (attempt %d/%d)",
                 response.status_code, delay, attempt, MAX_RETRIES,
@@ -68,7 +97,7 @@ def _post_with_retry(payload: dict, headers: dict) -> requests.Response:
             time.sleep(delay)
             delay *= 2
             continue
-        response.raise_for_status()  # non-retryable 4xx
+        raise _error_from(response)  # other 4xx: never retried
     raise RuntimeError("unreachable")  # loop always returns or raises
 
 
