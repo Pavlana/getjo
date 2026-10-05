@@ -1,6 +1,6 @@
 # Scoring eval as a CI gate: scores the committed made-up set (evals/ci/) with the real model and fails
 # below 8 of 10 agreements. Runs only when scoring code or the eval changes (~$0.05 a run), or by hand.
-# Needs the repository secret ANTHROPIC_API_KEY. Pull requests from forks don't get secrets, so this
+# Needs the repository secret ANTHROPIC_API_CI_EVAL_KEY (a key used only for CI, separate from the radar's). Pull requests from forks don't get secrets, so this
 # runs on pushes to main only.
 name: evals
 
@@ -33,4 +33,4 @@ jobs:
       - run: pip install -r requirements.txt
       - run: python -m evals.run --ci --min-agreement 8
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_CI_EVAL_KEY }}

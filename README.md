@@ -97,7 +97,7 @@ python -m evals.run --ci --min-agreement 8      # the committed made-up set; exi
 
 The evaluation reports agreement, precision and recall for "apply", a threshold sweep, every disagreement, and any reason that speculates about the candidate's personal circumstances. Prompt, model and threshold changes were each measured this way before being kept (see `docs/scoring.md`).
 
-GitHub Actions runs the unit tests on every push. When scoring code or the eval changes, it also runs the scoring eval on `evals/ci/` (a fictional candidate and ten fictional postings) with the real model and fails the build below 8 of 10 agreements. It needs the repository secret `ANTHROPIC_API_KEY`; a run costs about $0.05.
+GitHub Actions runs the unit tests on every push. When scoring code or the eval changes, it also runs the scoring eval on `evals/ci/` (a fictional candidate and ten fictional postings) with the real model and fails the build below 8 of 10 agreements. It needs the repository secret `ANTHROPIC_API_CI_EVAL_KEY`, a key used only for CI so its spend is separate from the radar's; a run costs about $0.05.
 
 ## Known limitations
 
