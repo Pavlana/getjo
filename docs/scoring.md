@@ -10,7 +10,7 @@ flowchart TD
   B -- no --> Z[Skip: already scored,<br>or given up]
   B -- yes --> C[Count one try]
   C --> D[Build the prompt:<br>CV + rubric + dealbreakers in system,<br>posting in user]
-  D --> E[Call Claude Haiku 4.5<br>temperature 0]
+  D --> E[Call Claude Sonnet 5<br>no temperature setting]
   E --> F{Reply has the<br>right JSON shape?}
   F -- no, 1st time --> E
   F -- no, 2nd time --> X[Unscored this run;<br>tried again next run]
@@ -32,7 +32,7 @@ flowchart TD
 | Dealbreakers | `dealbreakers` in `config/profile.toml` | Hard rules: if the posting states one, the score is capped at 3. |
 | The job | the `jobs` table | Title, company, location and plain-text description. Greenhouse provides the full posting; Lever and Ashby provide a shorter summary. |
 
-The model is set by `scoring.model` in `profile.toml`. The default, `claude-haiku-4-5`, is chosen for cost: about $0.004 per job.
+The model is set by `scoring.model` in `profile.toml`. The production model is `claude-sonnet-5`, chosen by the evaluation over Haiku 4.5: it follows the no-speculation rule fully and reads the rubric more strictly, which removed the false positives. It costs about $0.012 per job, roughly 2.7 times Haiku. Changing the model means re-reading the threshold sweep, not keeping the old threshold.
 
 ## 2. The prompt
 
@@ -93,18 +93,18 @@ The dealbreaker section asks for **evidence**, not a particular score. It reques
 
 `complete()` in `core/llm.py` sends one HTTPS POST to `https://api.anthropic.com/v1/messages` using `requests`, with no SDK.
 
-- **Settings:** `max_tokens` 600 (the reply is a short JSON object) and `temperature` 0. Temperature controls randomness; at 0, the same job gets nearly the same score every time, so a changed score reflects a changed input rather than chance. It is not perfectly repeatable: two identical evaluation runs have differed on 2 of 20 jobs.
+- **Settings:** `max_tokens` 600 (the reply is a short JSON object). Sonnet 5 doesn't accept a `temperature` setting, so none is sent; the earlier Haiku runs used temperature 0. Scores are not perfectly repeatable: two identical evaluation runs differed on 2 of 20 jobs.
 - **Network failures:** each request has a 30-second timeout. A 429 (rate limit), a 5xx (server error) or a network error is retried, up to 5 attempts in total, waiting 1, 2, 4 and 8 seconds between them. Any other 4xx fails immediately, because repeating it won't change the answer.
 - **Two kinds of error.** A failed call raises one of two errors, each carrying the API's own error type and message (for example `400 invalid_request_error: …`):
   - a **service error** means no request can succeed right now: an invalid key (401), no permission (403), no remaining credit (reported by the API as a 400 whose message mentions the credit balance), or a rate limit, server error or network failure that outlasted every retry;
   - a **job error** means the API rejected this particular request, such as an over-long posting; other jobs are unaffected.
-- **Cost:** the reply reports input and output tokens, and `PRICING` in `core/llm.py` converts them to dollars. Haiku 4.5 costs $1 per million input tokens and $5 per million output tokens. A typical job uses ~2,600 tokens in and ~250 out: 2,600 × $1/M + 250 × $5/M ≈ $0.004. Each call is logged, and `radar.py` and the evaluation both report the total.
+- **Cost:** the reply reports input and output tokens, and `PRICING` in `core/llm.py` converts them to dollars. Sonnet 5 costs $2 per million input tokens and $10 per million output tokens. A typical job uses ~2,600 tokens in and ~250 out: 2,600 × $2/M + 250 × $10/M ≈ $0.008, plus the retry and overhead that bring the measured average to about $0.012. Each call is logged, and `radar.py` and the evaluation both report the total.
 
 ## 5. Validating the reply
 
 `parse_score()` in `jobs/score.py` decides whether a reply can be trusted. The model produces text, not data, so the code checks every assumption:
 
-1. Strip markdown fences (` ```json … ``` `). Haiku adds them almost every time, even when told not to; the JSON inside is usually fine.
+1. Strip markdown fences (` ```json … ``` `). Models sometimes add them even when told not to (Haiku 4.5 did almost every time); the JSON inside is usually fine.
 2. Parse the JSON. Any text before or after the object makes the reply invalid.
 3. Check the shape:
    - `score` is a whole number from 1 to 10. `"8"` (text), `7.5` and `true` are all rejected. (`true` needs its own check: in Python, `True` counts as the integer 1.)

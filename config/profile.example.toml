@@ -14,8 +14,8 @@ locations = ["london"]
 remote_places = ["united states", "us", "california", "new york", "europe", "united kingdom"]
 
 [scoring]
-model = "claude-haiku-4-5"            # cheap model for scoring; change and compare with evals
-notify_threshold = 7                  # only scores >= this go to Telegram
+model = "claude-sonnet-5"             # chosen by evals/run.py over Haiku 4.5; change and compare with evals
+notify_threshold = 5                  # only scores >= this go to Telegram; model-specific, re-check with evals
 
 # The rubric Claude uses. Plain language, one line per criterion.
 rubric = [
