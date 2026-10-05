@@ -42,6 +42,7 @@ How a job gets its score, step by step (prompt, reply checks, dealbreaker quotes
 ## Known limitations
 
 - Only companies using Greenhouse, Lever, Ashby, Workday, SmartRecruiters or Workable are covered.
+- Workday lists at most 2,000 postings per site; a target can set `search` (the site's own search text, e.g. "London") to stay under it, and the run log warns when a target hits the cap.
 - Workday has no documented public API; the adapter uses the JSON endpoints Workday's own careers pages call, which can change without notice.
 - Workday, SmartRecruiters and Reed list postings without (full) descriptions; details are fetched (one request per posting) only for titles that pass the title filter.
 - Adzuna takes its app ID and key in the URL, and echoes the app ID in each result's `redirect_url`: both are redacted from logs and errors, and `redirect_url` is never kept.

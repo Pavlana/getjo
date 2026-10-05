@@ -18,6 +18,7 @@ from sources.html_text import html_to_text
 logger = logging.getLogger(__name__)
 
 PAGE_SIZE = 20  # the most Workday returns per request
+LISTING_CAP = 2000  # Workday never reports or pages past this many postings
 
 
 def _site(board: str) -> tuple[str, str, str]:
@@ -59,8 +60,12 @@ def add_details(job: dict, detail: dict) -> dict:
     }
 
 
-def fetch_jobs(company: str, board: str, wanted: Callable[[str], bool]) -> list[dict]:
-    """Fetch all postings for one Workday site; fetch details only for titles where wanted(title)."""
+def fetch_jobs(company: str, board: str, wanted: Callable[[str], bool], search: str = "") -> list[dict]:
+    """Fetch all postings for one Workday site; fetch details only for titles where wanted(title).
+
+    `search` is passed as the site's own search text (e.g. "London"), for employers with more
+    postings than Workday will list.
+    """
     base, tenant, site = _site(board)
     api = f"{base}/wday/cxs/{tenant}/{site}"
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -68,11 +73,14 @@ def fetch_jobs(company: str, board: str, wanted: Callable[[str], bool]) -> list[
     listed, offset, total = [], 0, None
     while total is None or offset < total:
         page = post_with_retry(
-            f"{api}/jobs", {"limit": PAGE_SIZE, "offset": offset, "searchText": "", "appliedFacets": {}},
+            f"{api}/jobs", {"limit": PAGE_SIZE, "offset": offset, "searchText": search, "appliedFacets": {}},
             label="workday",
         ).json()
         if total is None:
             total = page["total"]  # later pages can report 0
+            if total >= LISTING_CAP:
+                logger.warning("workday %s: %d+ postings, only the first %d can be listed; set `search` "
+                               "for this target in targets.toml", company, total, LISTING_CAP)
         if not page["jobPostings"]:
             break
         listed += page["jobPostings"]

@@ -122,7 +122,9 @@ def _fetch_matches(targets: list[dict], profile: dict) -> tuple[list[dict], list
             continue
         try:
             if source in NEEDS_TITLE_FILTER:
-                jobs = fetcher(name, board, wanted=lambda title: title_matches(title, filter_cfg))
+                # `search` (Workday only) narrows the listing on the board itself, for very large employers.
+                extra = {"search": company["search"]} if company.get("search") else {}
+                jobs = fetcher(name, board, wanted=lambda title: title_matches(title, filter_cfg), **extra)
             else:
                 jobs = fetcher(name, board)
         except Exception as e:  # one source failing must not stop the run

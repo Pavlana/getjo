@@ -4,6 +4,8 @@
 # board:  the name in the job board's web address, e.g. job-boards.greenhouse.io/<board>
 #         Find it on the company's careers page (open any job; the URL shows the board and name).
 #         Workday: "<tenant>.<wdN>/<site>" from <tenant>.<wdN>.myworkdayjobs.com/<site>, e.g. "exampleco.wd3/Careers".
+# search: optional, Workday only. The site's own search text (e.g. "London"), for employers with more
+#         postings than Workday will list (2,000); the run log warns when a target hits that cap.
 
 [[company]]
 name = "Example Co"

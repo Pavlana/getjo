@@ -69,6 +69,17 @@ class FetchJobsTest(unittest.TestCase):
         self.assertEqual(len(jobs), 21)
         mock_get.assert_not_called()
 
+    def test_search_text_sent_to_the_site(self, mock_post, mock_get):
+        mock_post.return_value = response({"total": 0, "jobPostings": []})
+        fetch_jobs("Citi", "citi.wd5/2", wanted=lambda title: False, search="London")
+        self.assertEqual(mock_post.call_args.args[1]["searchText"], "London")
+
+    def test_warns_when_listing_hits_workdays_cap(self, mock_post, mock_get):
+        mock_post.return_value = response({"total": 2000, "jobPostings": []})
+        with self.assertLogs("sources.workday", level="WARNING") as logs:
+            fetch_jobs("Citi", "citi.wd5/2", wanted=lambda title: False)
+        self.assertIn("set `search` for this target", logs.output[0])
+
     def test_failed_detail_skips_that_job_only(self, mock_post, mock_get):
         mock_post.return_value = response(LIST)
         mock_get.side_effect = Exception("404 Not Found")

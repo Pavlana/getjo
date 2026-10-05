@@ -465,6 +465,7 @@ class RunRealTest(unittest.TestCase):
             run(dry_run=False)
 
         mock_greenhouse.assert_called_once_with("Acme", "acme")
+        self.assertNotIn("search", mock_workday.call_args.kwargs)  # only when the target sets one
         wanted = mock_workday.call_args.kwargs["wanted"]
         self.assertTrue(wanted("Senior AI Engineer"))
         self.assertFalse(wanted("AI Engineer Intern"))  # title_exclude applies too
@@ -557,6 +558,17 @@ class RunRealTest(unittest.TestCase):
             self.assertTrue(run(dry_run=False))
 
         self.assertIn("devitjobs: feed unavailable", self._read_one("SELECT errors FROM runs")[0])
+
+    def test_workday_target_search_is_passed_to_the_fetcher(
+        self, mock_load, mock_connect, mock_send, mock_score, _
+    ):
+        self._wire(mock_load, mock_connect, [{"name": "Big", "source": "workday", "board": "big.wd5/2", "search": "London"}])
+        mock_workday = mock.Mock(return_value=[])
+
+        with fetchers(workday=mock_workday):
+            run(dry_run=False)
+
+        self.assertEqual(mock_workday.call_args.kwargs["search"], "London")
 
     def test_summary_sent_even_when_nothing_is_new(self, mock_load, mock_connect, mock_send, mock_score, _):
         self._wire(mock_load, mock_connect)
