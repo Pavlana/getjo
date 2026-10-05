@@ -570,6 +570,29 @@ class RunRealTest(unittest.TestCase):
 
         self.assertEqual(mock_workday.call_args.kwargs["search"], "London")
 
+    def test_jobs_sent_highest_score_first(self, mock_load, mock_connect, mock_send, mock_score, _):
+        self._wire(mock_load, mock_connect)
+        mock_score.side_effect = [scored(7), scored(9), scored(5), scored(8), scored(9)]
+        jobs = [make_job(i, title=f"AI Engineer {i}") for i in range(1, 6)]
+
+        with fetchers(greenhouse=mock.Mock(return_value=jobs)):
+            run(dry_run=False)
+
+        sent = [text.split("\n")[0] for text in job_sends(mock_send)]
+        self.assertEqual(sent, ["9/10 · AI Engineer 2", "9/10 · AI Engineer 5", "8/10 · AI Engineer 4", "7/10 · AI Engineer 1"])
+        self.assertEqual(self._score_of("greenhouse:Acme:3"), 5)  # below threshold 7: stored, not sent
+
+    def test_service_error_still_sends_jobs_already_scored(self, mock_load, mock_connect, mock_send, mock_score, _):
+        self._wire(mock_load, mock_connect)
+        mock_score.side_effect = [scored(8), ServiceError("401 authentication_error: invalid x-api-key")]
+
+        with fetchers(greenhouse=mock.Mock(return_value=[make_job(1), make_job(2)])):
+            self.assertFalse(run(dry_run=False))
+
+        self.assertEqual(len(job_sends(mock_send)), 1)
+        self.assertEqual(self._score_of("greenhouse:Acme:1"), 8)
+        self.assertIsNone(self._score_of("greenhouse:Acme:2"))
+
     def test_summary_sent_even_when_nothing_is_new(self, mock_load, mock_connect, mock_send, mock_score, _):
         self._wire(mock_load, mock_connect)
         mock_score.return_value = scored(8)

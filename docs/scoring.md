@@ -149,7 +149,7 @@ Worked example, for a posting that contains this sentence:
 
 **Counting tries.** A job's `score_attempts` increases by one only when the job itself fails: two unusable replies, a job error, or a failed send. A successful score counts nothing. A failed job gets one more chance on the next run; after its second failed run it is logged ("giving up on … after 2 tries") and left unscored permanently, so one problematic job costs at most 2 runs × 2 calls.
 
-**Sending.** A score at or above `notify_threshold` sends the job to Telegram as plain text:
+**Sending.** A score at or above `notify_threshold` sends the job to Telegram as plain text. All new jobs in a run are scored first, then sent highest score first, so the strongest matches lead:
 
 ```text
 8/10 · AI Engineer

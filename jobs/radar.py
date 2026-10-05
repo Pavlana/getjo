@@ -173,16 +173,12 @@ def _summary(fetched: int, matched: int, new: int, tally: Tally, cost: str, erro
     return "\n".join(lines)
 
 
-def _score_one(
-    conn: sqlite3.Connection, job: dict, cv_text: str, scoring_cfg: dict,
-    env: dict[str, str], errors: list[str], tally: Tally,
-) -> bool:
-    """Score one job and notify if it clears the threshold. Returns True if the score was stored.
-
-    The score is written after the send succeeds: if Telegram fails, the job stays unscored
-    and is tried again next run instead of being stored as scored but never delivered.
-    A ServiceError (the API can't serve anyone) is raised to the caller, which stops scoring.
-    """
+def _score(
+    job: dict, cv_text: str, scoring_cfg: dict, env: dict[str, str], errors: list[str], tally: Tally
+) -> dict | None:
+    """Score one job and add its cost to the tally. Returns the result, or None if this run
+    couldn't score it (logged). A ServiceError (the API can't serve anyone) is raised to the caller,
+    which stops scoring."""
     try:
         result, completions = score_with_retry(
             job, cv_text, scoring_cfg["rubric"], scoring_cfg.get("dealbreakers", []),
@@ -194,63 +190,77 @@ def _score_one(
     except Exception as e:  # one job failing must not stop the run
         logger.warning("scoring failed for %s: %s", job["id"], e)
         errors.append(f"score {job['id']}: {e}")
-        return False
+        return None
 
     for completion in completions:
         if completion.cost is None:
             tally.unpriced_calls += 1
         else:
             tally.cost += completion.cost
+    return result
 
-    if result is None:
+
+def _send(job: dict, result: dict, env: dict[str, str], errors: list[str]) -> bool:
+    try:
+        notify.send_telegram(_message(job, result), token=env["TELEGRAM_BOT_TOKEN"], chat_id=env["TELEGRAM_CHAT_ID"])
+    except Exception as e:
+        logger.warning("notify failed for %s: %s", job["id"], e)
+        errors.append(f"notify {job['id']}: {e}")
         return False
-
-    if result["score"] >= scoring_cfg["notify_threshold"]:
-        try:
-            notify.send_telegram(
-                _message(job, result), token=env["TELEGRAM_BOT_TOKEN"], chat_id=env["TELEGRAM_CHAT_ID"]
-            )
-        except Exception as e:
-            logger.warning("notify failed for %s: %s", job["id"], e)
-            errors.append(f"notify {job['id']}: {e}")
-            return False
-        tally.notified += 1
-
-    store.set_score(conn, job["id"], result["score"])
     return True
+
+
+def _count_failure(conn: sqlite3.Connection, job: dict, tally: Tally) -> None:
+    """One more failed try for this job; after MAX_SCORE_ATTEMPTS it is left unscored for good."""
+    attempt = store.add_score_attempt(conn, job["id"])
+    if attempt >= MAX_SCORE_ATTEMPTS:
+        logger.warning("giving up on %s after %d tries", job["id"], attempt)
+        tally.gave_up += 1
+    else:
+        tally.failed += 1
 
 
 def _score_and_notify(
     conn: sqlite3.Connection, matches: list[dict], scoring_cfg: dict, env: dict[str, str], errors: list[str]
 ) -> Tally:
-    """Score every matching job that has no score yet and tries left; notify those above the threshold.
+    """Score every matching job that has no score yet and tries left, then send those at or above
+    the threshold to Telegram, highest score first, so the best matches lead.
 
-    A job is notified only when its score goes from NULL to a number, and a scored job is never
-    scored again, so no job is notified twice. A run in which a job itself fails counts as one try;
-    after MAX_SCORE_ATTEMPTS the job is left unscored for good, which caps what a job that never
-    scores can cost. A service error (no credit, bad key, API down) stops scoring for this run and
-    counts against no job: the problem isn't any job's, and every remaining job would hit it too.
+    A score is written only after its send succeeds: if Telegram fails, the job stays unscored and
+    is tried again next run instead of being stored as scored but never delivered. A job is notified
+    only when its score goes from NULL to a number, and a scored job is never scored again, so no
+    job is notified twice. A run in which a job itself fails (unusable reply, rejected request,
+    failed send) counts as one try; after MAX_SCORE_ATTEMPTS the job is left unscored for good,
+    which caps what a job that never scores can cost. A service error (no credit, bad key, API down)
+    stops scoring for this run and counts against no job; jobs already scored are still sent.
     """
     cv_text = load_cv()
     tally = Tally()
     pending = [job for job in matches if _needs_scoring(conn, job)]
+    to_send = []
     for done, job in enumerate(pending):
         try:
-            stored = _score_one(conn, job, cv_text, scoring_cfg, env, errors, tally)
+            result = _score(job, cv_text, scoring_cfg, env, errors, tally)
         except ServiceError as e:
             tally.stopped = str(e)
             logger.error("scoring stopped: %s; %d jobs left for the next run", e, len(pending) - done)
             errors.append(f"scoring stopped: {e}")
             break
-        if stored:
-            tally.scored += 1
-            continue
-        attempt = store.add_score_attempt(conn, job["id"])
-        if attempt >= MAX_SCORE_ATTEMPTS:
-            logger.warning("giving up on %s after %d tries", job["id"], attempt)
-            tally.gave_up += 1
+        if result is None:
+            _count_failure(conn, job, tally)
+        elif result["score"] >= scoring_cfg["notify_threshold"]:
+            to_send.append((job, result))
         else:
-            tally.failed += 1
+            store.set_score(conn, job["id"], result["score"])
+            tally.scored += 1
+
+    for job, result in sorted(to_send, key=lambda pair: -pair[1]["score"]):  # stable: ties keep their order
+        if _send(job, result, env, errors):
+            store.set_score(conn, job["id"], result["score"])
+            tally.scored += 1
+            tally.notified += 1
+        else:
+            _count_failure(conn, job, tally)
     return tally
 
 
