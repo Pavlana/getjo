@@ -8,7 +8,7 @@ Find relevant job openings from company job boards without checking them by hand
 
 ```mermaid
 flowchart LR
-  T[targets.toml] --> F[fetch: greenhouse / lever / ashby /\nworkday / smartrecruiters / workable]
+  T[targets.toml] --> F[fetch: greenhouse / lever / ashby /\nworkday / smartrecruiters / workable /\neightfold / amazon]
   R[Reed search\nprofile.toml keywords] --> N
   D[DevITjobs RSS + job list] --> N
   F --> N[normalise to Job]
@@ -26,7 +26,7 @@ How a job gets its score, step by step (prompt, reply checks, dealbreaker quotes
 | field | type | note |
 |---|---|---|
 | id | str | `source:company:job_id`, primary key |
-| source | str | greenhouse, lever, ashby, workday, smartrecruiters, workable, reed, devitjobs |
+| source | str | greenhouse, lever, ashby, workday, smartrecruiters, workable, eightfold, amazon, reed, devitjobs |
 | company | str | from targets.toml |
 | title | str | |
 | location | str | as given by the board |
@@ -43,6 +43,7 @@ How a job gets its score, step by step (prompt, reply checks, dealbreaker quotes
 
 - Only companies using Greenhouse, Lever, Ashby, Workday, SmartRecruiters or Workable are covered.
 - Workday lists at most 2,000 postings per site; a target can set `search` (the site's own search text, e.g. "London") to stay under it, and the run log warns when a target hits the cap.
+- Eightfold (Microsoft) and amazon.jobs are undocumented too. amazon.jobs ignores its own city filter, so the whole country is listed (~800 UK jobs, 8 requests) with descriptions included; Eightfold needs one request per position for the description, made only for wanted titles.
 - Workday has no documented public API; the adapter uses the JSON endpoints Workday's own careers pages call, which can change without notice.
 - Workday, SmartRecruiters and Reed list postings without (full) descriptions; details are fetched (one request per posting) only for titles that pass the title filter.
 - Adzuna takes its app ID and key in the URL, and echoes the app ID in each result's `redirect_url`: both are redacted from logs and errors, and `redirect_url` is never kept.

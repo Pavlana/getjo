@@ -1,0 +1,88 @@
+{
+ "status": 200,
+ "error": {
+  "message": "",
+  "body": ""
+ },
+ "data": {
+  "positions": [
+   {
+    "id": 1970393557002726,
+    "displayJobId": "200057122",
+    "name": "Senior Electrical Engineer",
+    "locations": [
+     "United Kingdom, London, London"
+    ],
+    "standardizedLocations": [
+     "London, England, GB"
+    ],
+    "postedTs": 1790238657,
+    "solrScore": null,
+    "stars": 0,
+    "department": "Electrical Engineering",
+    "creationTs": 1789774321,
+    "isHot": 0,
+    "workLocationOption": "onsite",
+    "locationFlexibility": null,
+    "atsJobId": "200057122",
+    "positionUrl": "/careers/job/1970393557002726"
+   },
+   {
+    "id": 1970393556927547,
+    "displayJobId": "200042941",
+    "name": "Member of Technical Staff - Privacy Engineer, Health",
+    "locations": [
+     "United Kingdom, London, London"
+    ],
+    "standardizedLocations": [
+     "London, England, GB"
+    ],
+    "postedTs": 1786563219,
+    "solrScore": null,
+    "stars": 0,
+    "department": "Software Engineering",
+    "creationTs": 1783527590,
+    "isHot": 0,
+    "workLocationOption": "onsite",
+    "locationFlexibility": null,
+    "atsJobId": "200042941",
+    "positionUrl": "/careers/job/1970393556927547"
+   },
+   {
+    "id": 1970393556927554,
+    "displayJobId": "200042946",
+    "name": "Member of Technical Staff - Applied AI Lead, Health",
+    "locations": [
+     "United Kingdom, London, London"
+    ],
+    "standardizedLocations": [
+     "London, England, GB"
+    ],
+    "postedTs": 1786634677,
+    "solrScore": null,
+    "stars": 0,
+    "department": "Software Engineering",
+    "creationTs": 1783528053,
+    "isHot": 0,
+    "workLocationOption": "onsite",
+    "locationFlexibility": null,
+    "atsJobId": "200042946",
+    "positionUrl": "/careers/job/1970393556927554"
+   }
+  ],
+  "count": 65,
+  "sortBy": "distance",
+  "appliedFilters": {
+   "distance": [
+    "160"
+   ],
+   "includeRemote": [
+    "1"
+   ],
+   "includeRelocation": [
+    "0"
+   ]
+  }
+ },
+ "metadata": null
+}

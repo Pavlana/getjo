@@ -12,7 +12,7 @@ from core import config, notify, store
 from core.llm import ServiceError
 from core.match import names_any
 from jobs.score import load_cv, score_with_retry
-from sources import ashby, devitjobs, greenhouse, lever, reed, smartrecruiters, workable, workday
+from sources import amazon, ashby, devitjobs, eightfold, greenhouse, lever, reed, smartrecruiters, workable, workday
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +23,12 @@ FETCHERS = {
     "workable": workable.fetch_jobs,
     "workday": workday.fetch_jobs,
     "smartrecruiters": smartrecruiters.fetch_jobs,
+    "amazon": amazon.fetch_jobs,
+    "eightfold": eightfold.fetch_jobs,
 }
 # Sources that need one extra request per posting for its description: they fetch details only
 # for titles the filter wants, so a company with 700 postings costs a handful of extra requests.
-NEEDS_TITLE_FILTER = {"workday", "smartrecruiters"}
+NEEDS_TITLE_FILTER = {"workday", "smartrecruiters", "eightfold"}
 
 MAX_SCORE_ATTEMPTS = 2  # failed runs for one job before it is left unscored for good: one retry, no more
 
@@ -122,7 +124,7 @@ def _fetch_matches(targets: list[dict], profile: dict) -> tuple[list[dict], list
             continue
         try:
             if source in NEEDS_TITLE_FILTER:
-                # `search` (Workday only) narrows the listing on the board itself, for very large employers.
+                # `search` (Workday, Eightfold) narrows the listing on the board itself, for very large employers.
                 extra = {"search": company["search"]} if company.get("search") else {}
                 jobs = fetcher(name, board, wanted=lambda title: title_matches(title, filter_cfg), **extra)
             else:

@@ -82,7 +82,7 @@ Tick a box only when its acceptance criteria pass.
 
 ## Iteration 6 · Schedule (week 3)
 
-- [ ] Run automatically once a day (cron/launchd on the laptop, or GitHub Actions with secrets)
+- [x] Run automatically once a day (cron/launchd on the laptop, or GitHub Actions with secrets)
 - [x] A daily summary message even when there are no new jobs, so silence means broken, not empty
 
 **Acceptance:** two unattended runs in a row, visible in the `runs` table.
@@ -110,8 +110,8 @@ Tick a box only when its acceptance criteria pass.
 ## Iteration 8 · Big employers
 
 - [x] Workday: optional `search` per target (e.g. "London"), for employers with more than Workday's 2,000-posting listing cap
-- [ ] Amazon (amazon.jobs search, full descriptions in the results)
-- [ ] Microsoft (Eightfold search API; check descriptions live first)
+- [x] Amazon (amazon.jobs search, full descriptions in the results)
+- [x] Microsoft (Eightfold search API; check descriptions live first)
 - [ ] JPMorganChase (Oracle Cloud recruiting API; check the location filter live first)
 
 **Acceptance:** each employer's matching London roles appear in a dry run; a change in an undocumented feed shows up as a fetch error, not as silently missing jobs.

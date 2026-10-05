@@ -1,0 +1,169 @@
+{
+ "status": 200,
+ "error": {
+  "message": "",
+  "body": ""
+ },
+ "data": {
+  "id": 1970393557002726,
+  "displayJobId": "200057122",
+  "name": "Senior Electrical Engineer",
+  "locations": [
+   "United Kingdom, London, London"
+  ],
+  "standardizedLocations": [
+   "London, England, GB"
+  ],
+  "postedTs": 1790238657,
+  "stars": 0,
+  "department": "Electrical Engineering",
+  "creationTs": 1789774321,
+  "jobDescription": "<b>Overview</b><br><div><p>Join our team as a <strong>Senior Electrical Engineer</strong> and play a key role in supporting the safe, reliable operation of our mission-critical datacenter infrastructure. You’ll act as a technical authority for complex electrical systems, working closely with commissioning and operations teams to maintain, test and optimize infrastructure across the datacenter campus, while helping ensure the highest standards of safety, security and compliance.<br><br>Microsoft’s Cloud Operations &amp; Innovation (CO+I) is the engine that powers our cloud services. As a <strong>CO+I Senior Electrical Engineer</strong>, you will perform a key role in delivering the core infrastructure and foundational technologies for Microsoft's online services including Bing, Office 365, Xbox, OneDrive, and the Microsoft Azure platform. </p></div><p>Our infrastructure is comprised of a large global portfolio of more than 200 datacenters in 32 countries and millions of servers. Our foundation is built upon and managed by a team of subject matter experts working to support services for more than 1 billion customers and 20 million businesses in over 90 countries worldwide.</p><p>With environmental sustainability and optimization at the forefront of our datacenter design and operations, we continue to grow and evolve as we meet the ever-changing business demands that hold Microsoft as a world-class cloud provider.</p><p>Microsoft’s mission is to empower every person and every organization on the planet to achieve more. As employees we come together with a growth mindset, innovate to empower others, and collaborate to realize our shared goals. Each day we build on our values of respect, integrity, and accountability to create a culture of inclusion where everyone can thrive at work and beyond.</p><br><br><b>Responsibilities</b><br><p><strong><u>Responsibilities</u></strong>:</p><ul><li>A strong desire and capability to learn, grow, and develop new skills </li><li>Empower a culture of safety, security, and compliance in all aspect of data center activities  </li><li>Work with commissioning teams to properly test and validate installation, operation, and performance of electrical systems. </li><li>Understand the design and functionality of your datacenter  </li><li>Support 24x7x365 on-site datacenters operations and electrical infrastructure  </li><li>Act as the technical authority for on-site operations related to a large-scale mission critical electrical system, design, and functionality </li><li>Establish and coordinate maintenance and safety procedures, maintaining highly redundant electrical designs  </li><li>Managing the electrical infrastructures throughout datacenter campus ranging from a single large capacity facility, to several smaller ones</li></ul><br><br><b>Qualifications</b><br><ul><li><p class='\\\"paragraph\\\"'><strong><u>Required Qualifications:</u></strong></p><ul><li>Indepth technical engineering experience<ul><li>OR Bachelor's degree/Master's degree in Electrical Engineering, Computer Engineering, or related field AND of technical engineering experience.</li></ul></li><li>HV/LV Formal qualification held.</li></ul><p><strong>Background Check Requirements: </strong></p><p>Ability to meet Microsoft, customer and/or government security screening requirements are required for this role. These requirements include, but are not limited to the following specialized security screenings: </p><ul><li>Microsoft Cloud Background Check: This position will be required to pass the Microsoft Cloud background check upon hire/transfer and every two years thereafter.</li></ul></li></ul> <br><br><p>Electrical Engineering IC4 - The typical base pay range for this role across United Kingdom is  £ 74,700.00 - £ 122,600.00 per year. Certain roles may be eligible for benefits and other compensation. </p><p></p> <p>Find additional benefits and pay information here:<br><a href=\"https://careers.microsoft.com/v2/global/en/corporate-pay/united-kingdom-corporate-pay.html\">https://careers.microsoft.com/v2/global/en/corporate-pay/united-kingdom-corporate-pay.html</a></p><br><p>This position will be open for a minimum of 5 days, with applications accepted on an ongoing basis until the position is filled.</p><br><hr><br><p>Microsoft is an equal opportunity employer. All qualified applicants will receive consideration for employment without regard to age, ancestry, citizenship, color, family or medical care leave, gender identity or expression, genetic information, immigration status, marital status, medical condition, national origin, physical or mental disability, political affiliation, protected veteran or military status, race, ethnicity, religion, sex (including pregnancy), sexual orientation, or any other characteristic protected by applicable local laws, regulations and ordinances. If you need assistance with religious accommodations and/or a reasonable accommodation due to a disability during the application process, read more about <a href=\"https://careers.microsoft.com/v2/global/en/accessibility.html\"><b><u>requesting accommodations.</u></b></a></p> ",
+  "location": "United Kingdom, London, London",
+  "isHot": 0,
+  "workLocationOption": "onsite",
+  "locationFlexibility": null,
+  "atsJobId": "200057122",
+  "positionUrl": "/careers/job/1970393557002726",
+  "publicUrl": "https://apply.careers.microsoft.com/careers/job/1970393557002726",
+  "efcustomTextWorkSite": [
+   "Fully on-site"
+  ],
+  "efcustomTextRequiredTravel": [
+   "Less than 25%"
+  ],
+  "efcustomTextCurrentProfession": [
+   "Hardware Engineering"
+  ],
+  "efcustomTextTaDisciplineName": [
+   "Electrical Engineering"
+  ],
+  "efcustomTextRoletype": [
+   "Individual Contributor"
+  ],
+  "efcustomTextEmploymentType": [
+   "Full-Time"
+  ],
+  "positionExtraDetails": {
+   "videos": [
+    {
+     "url": "https://www.youtube-nocookie.com/embed/3zVUrcGVTrw",
+     "title": "Our mission",
+     "description": "220,000 employees empowering 8,000,000,000 people on the planet. To make every small business more productive and every large business more competitiv..."
+    },
+    {
+     "url": "https://www.youtube-nocookie.com/embed/DddJhta9kJU",
+     "title": "100% Empowered by Employees",
+     "description": "Behind the technology, you’ll find leaders and innovators, and movers and shakers. This is Microsoft. Move your career into the future with us: https:..."
+    },
+    {
+     "url": "https://www.youtube-nocookie.com/embed/UTLflQWya8w",
+     "title": "One Day, One Microsoft",
+     "description": "This short film, created entirely of user generated content, celebrates the hopes, challenges and dreams of the individuals that make up Microsoft, an..."
+    }
+   ],
+   "blogs": [
+    {
+     "url": "https://blogs.microsoft.com/blog/2026/09/28/new-microsoft-data-innovations-unlock-what-only-your-business-knows/",
+     "title": "New Microsoft data innovations unlock what only your business knows",
+     "description": "Every organization has knowledge that is uniquely its own: the way its business operates, the data it has built over time, the expertise of its people and the context behind thousands of everyday decisions. As powerful AI models become more widely available, that unique business intelligence matters more than ever. The difference will come from... The post  New Microsoft data innovations unlock what only your business knows  appeared first on  The Official Microsoft Blog .",
+     "image": "https://blogs.microsoft.com/wp-content/uploads/2026/09/OMB-FabCon-26-Final-Hero-9_24-1024x683.jpg"
+    },
+    {
+     "url": "https://blogs.microsoft.com/blog/2026/09/25/introducing-the-new-copilot-with-home-code-and-autopilot/",
+     "title": "Introducing the new Copilot with Home, Code and Autopilot",
+     "description": "We’re reimagining Microsoft Copilot to enable work as it evolves and to help expand what every individual and every organization can accomplish in the flow of human ambition. Today we’re introducing the new Copilot to connect the tools people rely on with the next generation of capabilities they’ll need to build, customize and scale AI... The post  Introducing the new Copilot with Home, Code and Autopilot  appeared first on  The Official Microsoft Blog .",
+     "image": "https://blogs.microsoft.com/wp-content/uploads/2026/09/OMB-Copilot-9-25-Hero-9_22_26-1024x576.png"
+    },
+    {
+     "url": "https://blogs.microsoft.com/blog/2026/09/17/what-weve-learned-from-microsofts-own-ai-transformation/",
+     "title": "What we’ve learned from Microsoft’s own AI transformation",
+     "description": "AI is reshaping work faster than any organization has fully mastered. Across industries, the conversation has shifted from what AI can do to how companies can use AI to create business value and expand what people are able to achieve. At Microsoft, we believe the organizations that succeed will be what we call Frontier Firms:... The post  What we’ve learned from Microsoft’s own AI transformation  appeared first on  The Official Microsoft Blog .",
+     "image": "https://blogs.microsoft.com/wp-content/uploads/2026/09/OMB-Hero-FINAL-9_17-1024x683.jpg"
+    },
+    {
+     "url": "https://blogs.microsoft.com/blog/2026/09/16/microsofts-commitment-for-ai-in-education/",
+     "title": "Microsoft’s commitment for AI in education: Protecting students, strengthening learning",
+     "description": "Microsoft has been in the business of education for five decades. Since the earliest days of this company, we have worked alongside educators, students, families and educational leaders through each new wave of technology — and we have learned what helps learning and what gets in the way. That commitment continues today, in a technological... The post  Microsoft’s commitment for AI in education: Protecting students, strengthening learning  appeared first on  The Official Microsoft Blog .",
+     "image": "https://blogs.microsoft.com/wp-content/uploads/2026/09/OMB-Hero-Education-FINAL-1024x683.jpg"
+    },
+    {
+     "url": "https://blogs.microsoft.com/blog/2026/09/01/the-yield-imperative-turning-ai-infrastructure-into-useful-intelligence/",
+     "title": "The yield imperative: Turning AI infrastructure into useful intelligence",
+     "description": "As we enter the next era, what will be the defining measure of our progress? Every industry has a word that shapes how it thinks. For pilots, it’s safety. For insurers, it’s risk. For the semiconductor industry, it’s yield. Yield does not ask how elegant the solution is, how many years it took or what... The post  The yield imperative: Turning AI infrastructure into useful intelligence  appeared first on  The Official Microsoft Blog .",
+     "image": "https://blogs.microsoft.com/wp-content/uploads/2026/09/OMB-SEMICON-Hero.png"
+    },
+    {
+     "url": "https://blogs.microsoft.com/blog/2026/07/28/looking-back-on-microsofts-fy26-from-ai-experimentation-to-frontier-transformation/",
+     "title": "Looking back on Microsoft’s FY26: From AI experimentation to Frontier Transformation",
+     "description": "Throughout this past fiscal year, customers across every industry and segment moved from AI experimentation to deploying AI for real-world business outcomes. They unlocked innovation and created new opportunities for growth. We saw the emergence of Frontier Firms as they moved beyond efficiency gains to focus on human ambition and embed AI at the core... The post  Looking back on Microsoft’s FY26: From AI experimentation to Frontier Transformation  appeared first on  The Official Microsoft Blog .",
+     "image": "https://blogs.microsoft.com/wp-content/uploads/2026/07/OMB-Q426-Hero-Final-7_27-1024x579.png"
+    },
+    {
+     "url": "https://blogs.microsoft.com/blog/2026/07/27/rethinking-security-for-the-age-of-ai/",
+     "title": "Rethinking security for the age of AI",
+     "description": "Editor’s note: Updates with additional details on the model’s crash score. Why security needs a new cyber stack — Introducing Project Perception The physics of cybersecurity are changing. Autonomous systems can now reason, adapt and operate continuously. At the same time, the cost of offense is falling, while the volume, velocity and complexity of what... The post  Rethinking security for the age of AI  appeared first on  The Official Microsoft Blog .",
+     "image": "https://blogs.microsoft.com/wp-content/uploads/2026/07/OMB-Project-Perception-Final-Hero-7_27-1024x576.png"
+    },
+    {
+     "url": "https://blogs.microsoft.com/blog/2026/07/22/powering-americas-genesis-mission-microsofts-commitment-to-scientific-discovery/",
+     "title": "Powering America’s Genesis Mission: Microsoft’s commitment to scientific discovery",
+     "description": "Today, we’re excited to share a long-term commitment to the Department of Energy’s (DOE) Genesis Mission, backed by a $60 million investment designed to accelerate AI for science and the breakthroughs it can deliver for the country. This deepened commitment includes Microsoft’s new Scientific Partnership Advancing Research &amp; Knowledge coordination hub and program office, otherwise... The post  Powering America’s Genesis Mission: Microsoft’s commitment to scientific discovery  appeared first on  The Official Microsoft Blog .",
+     "image": "https://blogs.microsoft.com/wp-content/uploads/2026/07/GettyImages-1413606459-1024x540.jpg"
+    },
+    {
+     "url": "https://blogs.microsoft.com/blog/2026/07/20/microsoft-expands-azure-ai-and-hpc-infrastructure-with-amd/",
+     "title": "Microsoft expands Azure AI and HPC infrastructure with AMD",
+     "description": "AI workloads are scaling faster than any single infrastructure approach can support — with more models, new agent-driven workloads and surging compute demand driving the need for greater specialization across the stack. To meet this need, Microsoft continues to evolve Azure’s infrastructure, including expanding its AI fleet with AMD’s most advanced AI and high-performance computing... The post  Microsoft expands Azure AI and HPC infrastructure with AMD  appeared first on  The Official Microsoft Blog .",
+     "image": "https://blogs.microsoft.com/wp-content/uploads/2026/07/OMB-Azure-AMD-Hero-1024x576.jpg"
+    },
+    {
+     "url": "https://blogs.microsoft.com/blog/2026/07/06/the-latest-in-our-company-transformation/",
+     "title": "The latest in our company transformation",
+     "description": "Amy Coleman, EVP and Chief People Officer, shared the following communication with employees today. When I stepped into this role, I promised to communicate more openly with you and share the “why” behind our decisions. Today we are eliminating around 4,800 roles, about 2.1% of our global workforce, as we focus our people, investments, and... The post  The latest in our company transformation  appeared first on  The Official Microsoft Blog .",
+     "image": "https://blogs.microsoft.com/wp-content/uploads/2026/03/MicrosoftLogo_social-1024x576.png"
+    }
+   ],
+   "perks": [
+    {
+     "title": "Flexibility",
+     "description": "Balance what matters—your work, your life, and your team—through trust, autonomy, and shared accountability",
+     "image": "https://static.vscdn.net/images/careers/demo/microsoft/1761075555::flexibility+perk",
+     "imageAlt": null,
+     "icon": null,
+     "isFavicon": null
+    },
+    {
+     "title": "Growth",
+     "description": "Stretch your skills, expand your impact, and grow with support that meets you where you are",
+     "image": "https://static.vscdn.net/images/careers/demo/microsoft/1761075637::growth+perk",
+     "imageAlt": null,
+     "icon": "mdiLaptop",
+     "isFavicon": null
+    },
+    {
+     "title": "Wellbeing",
+     "description": "Support for your body, mind, and financial future—so you can stay energized and do your best work",
+     "image": "https://static.vscdn.net/images/careers/demo/microsoft/1761075686::wellbeing+perk",
+     "imageAlt": null,
+     "icon": null,
+     "isFavicon": null
+    },
+    {
+     "title": "Community PCS",
+     "description": "Find your people, build your network, and feel supported every step of the way",
+     "image": "https://static.vscdn.net/images/careers/demo/microsoft/1761075742::community+perk",
+     "imageAlt": null,
+     "icon": null,
+     "isFavicon": null
+    }
+   ],
+   "pymww": {
+    "people": [],
+    "count": 0
+   },
+   "customContent": []
+  }
+ },
+ "metadata": null
+}

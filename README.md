@@ -1,6 +1,6 @@
 # job-radar
 
-Watches public job boards (Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Workable) for AI engineering roles, filters them, scores each one against a candidate's CV with Claude, and sends strong matches to a Telegram chat.
+Watches public job boards (Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Workable, Eightfold, amazon.jobs) for AI engineering roles, filters them, scores each one against a candidate's CV with Claude, and sends strong matches to a Telegram chat.
 
 Built with plain Python (`requests` + standard library) and no frameworks, as a small, fully visible example of an LLM system: sources, storage, scoring, evaluation and notification.
 
@@ -8,7 +8,7 @@ Status: in development. See `docs/ROADMAP.md` for progress, `docs/design.md` for
 
 ## What it does
 
-- Fetches open jobs from each configured company's Greenhouse, Lever, Ashby, Workday, SmartRecruiters or Workable board.
+- Fetches open jobs from each configured company's Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Workable or Eightfold board, and Amazon's own job site.
 - Optionally searches Reed.co.uk by keyword across all employers (`[reed]` in `profile.toml`, `REED_API_KEY`), skipping employers already fetched from their own board.
 - Optionally reads DevITjobs.uk, a UK tech job board (`[devitjobs]` in `profile.toml`, no key), with the same skip.
 - A discovery report (`python -m jobs.discover`, run by hand) searches Adzuna for companies hiring for matching titles that aren't targets yet, guesses their Greenhouse, Ashby, Lever or SmartRecruiters board, and prints `[[company]]` blocks to review. It never edits `targets.toml`.
@@ -83,8 +83,8 @@ A run missed while the Mac is asleep starts on wake; a run missed while it is sh
 
 ## Known limitations
 
-- Supported boards: Greenhouse, Lever, Ashby, Workday, SmartRecruiters and Workable. Companies on other systems (e.g. Avature, or a custom careers site) are skipped.
-- Workday has no documented public API: the adapter uses the endpoints its own careers pages call, so a change on Workday's side shows up as a fetch error for those companies.
+- Supported boards: Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Workable, Eightfold and amazon.jobs. Companies on other systems (e.g. Avature, or a custom careers site) are skipped.
+- Workday, Eightfold and amazon.jobs have no documented public API: the adapter uses the endpoints its own careers pages call, so a change on Workday's side shows up as a fetch error for those companies.
 - Reed: only direct-employer ads by default (agency ads often hide the employer, so duplicates can't be detected). A job is recognised as a duplicate of a target's own posting by employer name only.
 - The schedule runs on one Mac and depends on it being on. Every run ends with a summary message in Telegram, so a missed run shows up only as a missing message; nothing outside the Mac raises an alert.
 - Scores cluster around 8 for any reasonable fit, so strong and borderline matches are hard to separate with the threshold alone.
