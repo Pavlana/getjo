@@ -88,6 +88,13 @@ def add_score_attempt(conn: sqlite3.Connection, job_id: str) -> int:
     return conn.execute("SELECT score_attempts FROM jobs WHERE id = ?", (job_id,)).fetchone()[0]
 
 
+def companies_from(conn: sqlite3.Connection, sources: list[str]) -> set[str]:
+    """Names of companies with at least one stored job from any of `sources`."""
+    marks = ", ".join("?" for _ in sources)
+    rows = conn.execute(f"SELECT DISTINCT company FROM jobs WHERE source IN ({marks})", sources).fetchall()
+    return {row[0] for row in rows}
+
+
 def set_score(conn: sqlite3.Connection, job_id: str, score: int) -> None:
     conn.execute("UPDATE jobs SET score = ? WHERE id = ?", (score, job_id))
     conn.commit()

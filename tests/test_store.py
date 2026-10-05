@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from core.store import (
-    add_score_attempt, connect, get_job, get_scoring_state, record_run, set_score, upsert_job,
+    add_score_attempt, companies_from, connect, get_job, get_scoring_state, record_run, set_score, upsert_job,
 )
 
 JOB = {
@@ -28,6 +28,14 @@ class StoreTest(unittest.TestCase):
     def tearDown(self):
         self.conn.close()
         self._tmp.cleanup()
+
+    def test_companies_from_given_sources_only(self):
+        upsert_job(self.conn, JOB)
+        upsert_job(self.conn, {**JOB, "id": "reed:NewCo:1", "source": "reed", "company": "NewCo"})
+        upsert_job(self.conn, {**JOB, "id": "reed:NewCo:2", "source": "reed", "company": "NewCo"})
+        upsert_job(self.conn, {**JOB, "id": "devitjobs:Other:3", "source": "devitjobs", "company": "Other"})
+        self.assertEqual(companies_from(self.conn, ["reed", "devitjobs"]), {"NewCo", "Other"})
+        self.assertEqual(companies_from(self.conn, ["lever"]), set())
 
     def test_upsert_new_then_duplicate(self):
         self.assertTrue(upsert_job(self.conn, JOB))

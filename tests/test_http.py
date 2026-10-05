@@ -74,6 +74,36 @@ class GetWithRetryTest(unittest.TestCase):
         self.assertEqual(mock_get.call_count, 5)
 
 
+class RedactTest(unittest.TestCase):
+    """Secrets an API takes in the URL must not reach log lines or exception messages."""
+
+    @mock.patch("core.http.time.sleep")
+    @mock.patch("core.http.requests.get")
+    def test_secret_redacted_in_retry_log_and_final_error(self, mock_get, mock_sleep):
+        url = "https://api.example.com/search?app_key=SECRET123"
+        mock_get.side_effect = requests.ConnectionError(f"Max retries exceeded with url: {url}")
+
+        with self.assertLogs("core.http", level="WARNING") as logs:
+            with self.assertRaises(requests.ConnectionError) as ctx:
+                get_with_retry(url, label="test", redact=("SECRET123",))
+
+        self.assertNotIn("SECRET123", "\n".join(logs.output))
+        self.assertNotIn("SECRET123", str(ctx.exception))
+        self.assertIn("app_key=***", str(ctx.exception))
+        self.assertIsNone(ctx.exception.__cause__)
+
+    @mock.patch("core.http.requests.get")
+    def test_secret_redacted_in_http_error(self, mock_get):
+        resp = make_response(401)
+        resp.raise_for_status.side_effect = requests.HTTPError("401 for url: https://x/?app_key=SECRET123")
+        mock_get.return_value = resp
+
+        with self.assertRaises(requests.HTTPError) as ctx:
+            get_with_retry("https://x/?app_key=SECRET123", label="test", redact=("SECRET123",))
+
+        self.assertEqual(str(ctx.exception), "401 for url: https://x/?app_key=***")
+
+
 class PostWithRetryTest(unittest.TestCase):
     """The retry loop is shared with get_with_retry; this checks the POST is sent and retried."""
 

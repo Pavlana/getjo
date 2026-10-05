@@ -39,7 +39,7 @@ It is also my learning project for AI system design. I'm an experienced cloud en
 core/      llm.py (Anthropic calls), store.py (SQLite), notify.py (Telegram), config.py
 sources/   greenhouse.py, lever.py, ashby.py, workday.py, smartrecruiters.py, workable.py, reed.py (keyword search), devitjobs.py
            -> each returns a list of Job dicts in one shared shape; html_text.py is shared
-jobs/      radar.py (fetch -> filter -> store -> score -> notify)
+jobs/      radar.py (fetch -> filter -> store -> score -> notify), discover.py (new companies to consider)
 evals/     cases/*.jsonl, run.py
 tests/     unit tests + fixtures/
 config/    targets.toml (companies), profile.toml (filters, rubric), cv.md — all gitignored; *.example.toml are committed templates
@@ -53,7 +53,8 @@ docs/      ROADMAP.md (iterations and tasks), design.md (diagram, job shape), sc
 - Dry run, no Telegram and no LLM: `python -m jobs.radar --dry-run`
 - Tests: `python -m unittest`
 - Evals: `python -m evals.run`
+- Discovery report (by hand): `python -m jobs.discover`
 
 ## Environment variables
 
-`ANTHROPIC_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`; optional `REED_API_KEY`
+`ANTHROPIC_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`; optional `REED_API_KEY`; for discovery `ADZUNA_APP_ID`, `ADZUNA_API_KEY`

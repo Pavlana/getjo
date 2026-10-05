@@ -100,10 +100,22 @@ Tick a box only when its acceptance criteria pass.
 - [x] Reed search source: free API key, keyword + location search, details endpoint for the full description; check description length live before building. Same job from two sources (a search service and the company's own board) is notified once
 - [x] Jooble: request an API key, check fields, description length and terms; build a source only if descriptions are usable for scoring. Evaluated, not built: ~280-character excerpts with no details endpoint, country-only locations
 - [x] DevITjobs UK: check terms of use for the public jobs list; if allowed, use it for discovery (companies hiring for matching titles) and, if job details are reachable, as a source
-- [ ] Adzuna for discovery: search returns only a snippet, too short for scoring; use it to find companies hiring for matching titles in London and add their boards to targets
+- [x] Adzuna for discovery: search returns only a snippet, too short for scoring; use it to find companies hiring for matching titles in London and add their boards to targets
 
 **Acceptance:** every reachable target is fetched in a normal run, and at least one search-based source adds jobs from companies not in `targets.toml`, with no job notified twice.
 **Concept:** coverage vs effort; choosing sources by what they add, not by what is easiest to build.
+
+---
+
+## Iteration 8 · Big employers
+
+- [ ] Workday: optional `search` per target (e.g. "London"), for employers with more than Workday's 2,000-posting listing cap
+- [ ] Amazon (amazon.jobs search, full descriptions in the results)
+- [ ] Microsoft (Eightfold search API; check descriptions live first)
+- [ ] JPMorganChase (Oracle Cloud recruiting API; check the location filter live first)
+
+**Acceptance:** each employer's matching London roles appear in a dry run; a change in an undocumented feed shows up as a fetch error, not as silently missing jobs.
+**Concept:** undocumented APIs as dependencies: pin their shape with fixtures, fail loudly when it changes.
 
 ---
 

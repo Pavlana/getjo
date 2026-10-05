@@ -13,13 +13,23 @@ MAX_RETRIES = 5
 BACKOFF_BASE = 1.0  # seconds; doubles each retry, so 1, 2, 4, 8, 16
 
 
-def get_with_retry(url: str, *, label: str, auth: tuple[str, str] | None = None) -> requests.Response:
+def get_with_retry(
+    url: str, *, label: str, auth: tuple[str, str] | None = None, redact: tuple[str, ...] = ()
+) -> requests.Response:
     """GET with a timeout; retry on 429/5xx with exponential backoff, capped.
 
     `label` identifies the caller (e.g. "greenhouse") in log lines only. `auth` is sent as an HTTP
     Basic auth header (for API keys), so the key never appears in the URL or in log lines.
+    `redact` lists secrets an API insists on taking in the URL (Adzuna): they are replaced with
+    "***" in retry log lines and in the message of any exception raised, which would otherwise
+    quote the URL.
     """
-    return _with_retry(lambda: requests.get(url, timeout=TIMEOUT, auth=auth), label)
+    try:
+        return _with_retry(lambda: requests.get(url, timeout=TIMEOUT, auth=auth), label, redact)
+    except requests.RequestException as e:
+        if not redact:
+            raise
+        raise type(e)(_redacted(str(e), redact)) from None  # "from None": the original still quotes the URL
 
 
 def post_with_retry(url: str, payload: dict, *, label: str) -> requests.Response:
@@ -31,7 +41,16 @@ def post_with_retry(url: str, payload: dict, *, label: str) -> requests.Response
     return _with_retry(lambda: requests.post(url, json=payload, timeout=TIMEOUT), label)
 
 
-def _with_retry(send: Callable[[], requests.Response], label: str) -> requests.Response:
+def _redacted(text: str, secrets: tuple[str, ...]) -> str:
+    for secret in secrets:
+        if secret:
+            text = text.replace(secret, "***")
+    return text
+
+
+def _with_retry(
+    send: Callable[[], requests.Response], label: str, redact: tuple[str, ...] = ()
+) -> requests.Response:
     delay = BACKOFF_BASE
     for attempt in range(1, MAX_RETRIES + 1):
         try:
@@ -39,7 +58,7 @@ def _with_retry(send: Callable[[], requests.Response], label: str) -> requests.R
         except requests.RequestException as e:
             if attempt == MAX_RETRIES:
                 raise
-            logger.warning("%s request failed (%s), retrying in %.0fs", label, e, delay)
+            logger.warning("%s request failed (%s), retrying in %.0fs", label, _redacted(str(e), redact), delay)
             time.sleep(delay)
             delay *= 2
             continue

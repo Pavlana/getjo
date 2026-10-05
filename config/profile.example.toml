@@ -50,3 +50,10 @@ exclude_employers = ["Example Training Ltd"]
 [devitjobs]
 enabled = true
 exclude_employers = []   # e.g. recruitment agencies, if they get too noisy
+
+# Discovery report (python -m jobs.discover, run by hand): companies hiring for these titles that
+# aren't targets yet, with their job board if one can be found. Needs ADZUNA_APP_ID and ADZUNA_API_KEY.
+[discover]
+keywords = ["AI engineer", "applied AI", "LLM engineer", "forward deployed engineer"]
+location = "London"
+max_days_old = 30

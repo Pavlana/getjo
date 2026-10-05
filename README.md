@@ -11,6 +11,7 @@ Status: in development. See `docs/ROADMAP.md` for progress, `docs/design.md` for
 - Fetches open jobs from each configured company's Greenhouse, Lever, Ashby, Workday, SmartRecruiters or Workable board.
 - Optionally searches Reed.co.uk by keyword across all employers (`[reed]` in `profile.toml`, `REED_API_KEY`), skipping employers already fetched from their own board.
 - Optionally reads DevITjobs.uk, a UK tech job board (`[devitjobs]` in `profile.toml`, no key), with the same skip.
+- A discovery report (`python -m jobs.discover`, run by hand) searches Adzuna for companies hiring for matching titles that aren't targets yet, guesses their Greenhouse, Ashby, Lever or SmartRecruiters board, and prints `[[company]]` blocks to review. It never edits `targets.toml`.
 - Filters by title keywords and location: on-site roles in the listed locations, and remote roles only in the listed regions (`config/profile.toml`).
 - Stores matches in SQLite, deduplicated by `source:company:job_id`.
 - Scores each new match from 1 to 10 against the CV, a rubric of preferences and a list of dealbreakers. A dealbreaker only counts when the model quotes the posting stating it, and the code then caps the score at 3.
@@ -43,6 +44,7 @@ For the evaluation, label some stored jobs as `apply`, `maybe` or `skip` in `eva
 python -m jobs.radar --dry-run   # preview matches; no database, LLM or Telegram
 python -m jobs.radar             # fetch, filter, store, score, and notify
 python -m evals.run              # score the labelled jobs and compare with the labels (~$0.08)
+python -m jobs.discover          # report companies hiring for matching titles that aren't targets yet
 python -m unittest               # test suite; no network, fixtures in tests/fixtures/
 ```
 

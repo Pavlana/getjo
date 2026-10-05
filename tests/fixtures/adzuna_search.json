@@ -1,0 +1,167 @@
+{
+ "count": 74,
+ "results": [
+  {
+   "id": "5904316492",
+   "redirect_url": "https://www.adzuna.co.uk/jobs/land/ad/5904316492?se=ZFVdEn--8RGdRLcUnFY4TA&utm_medium=api&utm_source=TESTAPPID&v=DAC483B820D29E55D81E816330E2FFCBD519E05D",
+   "__CLASS__": "Adzuna::API::Response::Job",
+   "contract_time": "full_time",
+   "created": "2026-10-01T01:04:24Z",
+   "location": {
+    "area": [
+     "UK",
+     "London"
+    ],
+    "display_name": "London, UK",
+    "__CLASS__": "Adzuna::API::Response::Location"
+   },
+   "salary_is_predicted": "1",
+   "salary_max": 72730.16,
+   "title": "Applied AI Engineer",
+   "adref": "eyJhbGciOiJIUzI1NiJ9.eyJpIjoiNTkwNDMxNjQ5MiIsInMiOiJaRlZkRW4tLThSR2RSTGNVbkZZNFRBIn0.JaAFRC6A1J0InL0G8JN8nIERCXiQYYu5JWLkB-d4HpE",
+   "salary_min": 72730.16,
+   "latitude": 51.503378,
+   "company": {
+    "__CLASS__": "Adzuna::API::Response::Company",
+    "display_name": "G-Research"
+   },
+   "category": {
+    "label": "IT Jobs",
+    "tag": "it-jobs",
+    "__CLASS__": "Adzuna::API::Response::Category"
+   },
+   "description": "We tackle the most complex problems in quantitative finance by bringing scientific clarity to financial complexity. From our London HQ, we unite world-class researchers and engineers in an environment that values deep exploration and methodical execution - because the best ideas take time to evolve. Together we’re building a world-class platform to amplify our teams’ most powerful ideas. As part of our engineering team, you’ll shape the platforms and tools that drive high-impact research - desi…",
+   "longitude": -0.139134
+  },
+  {
+   "id": "5903986724",
+   "redirect_url": "https://www.adzuna.co.uk/jobs/details/5903986724?utm_medium=api&utm_source=TESTAPPID",
+   "location": {
+    "__CLASS__": "Adzuna::API::Response::Location",
+    "display_name": "Charing Cross, Central London",
+    "area": [
+     "UK",
+     "London",
+     "Central London",
+     "Charing Cross"
+    ]
+   },
+   "created": "2026-09-30T15:55:47Z",
+   "salary_max": 65767.41,
+   "salary_is_predicted": "1",
+   "__CLASS__": "Adzuna::API::Response::Job",
+   "adref": "eyJhbGciOiJIUzI1NiJ9.eyJpIjoiNTkwMzk4NjcyNCIsInMiOiJaRlZkRW4tLThSR2RSTGNVbkZZNFRBIn0.o8UwKUEyspza3VYmvQDYL5c_I1URxAxwZd52_gh-8JU",
+   "salary_min": 65767.41,
+   "title": "Applied AI Engineer, Markets Operations - Associate",
+   "contract_type": "contract",
+   "description": "Our client is a leading global investment bank. JOB DESCRIPTION Help shape the next wave of Applied AI innovation in Markets Operations by turning ideas into production-ready solutions. You will build practical AI capabilities that improve workflows, strengthen controls, and unlock productivity for teams across the organization. Working alongside engineers, AI specialists, and operations partners, you will bridge cutting-edge techniques with enterprise-grade systems. Here, you can grow your car…",
+   "longitude": -0.127788,
+   "latitude": 51.506896,
+   "company": {
+    "__CLASS__": "Adzuna::API::Response::Company",
+    "display_name": "Hackajob Ltd"
+   },
+   "category": {
+    "__CLASS__": "Adzuna::API::Response::Category",
+    "tag": "it-jobs",
+    "label": "IT Jobs"
+   }
+  },
+  {
+   "adref": "eyJhbGciOiJIUzI1NiJ9.eyJzIjoiWkZWZEVuLS04UkdkUkxjVW5GWTRUQSIsImkiOiI1OTAyNzg3NTUxIn0.Ji5U2IPVEWv607BZQ6nl6UwKVhGePveuis0AM1D8ZeE",
+   "salary_min": 41859.48,
+   "title": "Applied AI Researcher",
+   "longitude": -0.139134,
+   "description": "Fuse is an AI-first energy company on a mission to make energy abundant and affordable, fast. We combine first-principles thinking with cutting-edge technology to build a radically better energy system. We've raised over $200M from top-tier investors including Balderton, Lakestar, Accel, Creandum, Lowercarbon, Ribbit, 20VC, Hummingbird and Collaborative Fund, alongside strategic angels including Nico Rosberg and GPs behind Meta, Revolut, Spotify and Uber. We're building a fully integrated energ…",
+   "latitude": 51.503378,
+   "category": {
+    "__CLASS__": "Adzuna::API::Response::Category",
+    "label": "Engineering Jobs",
+    "tag": "engineering-jobs"
+   },
+   "company": {
+    "__CLASS__": "Adzuna::API::Response::Company",
+    "display_name": "Fuse Energy"
+   },
+   "id": "5902787551",
+   "redirect_url": "https://www.adzuna.co.uk/jobs/details/5902787551?utm_medium=api&utm_source=TESTAPPID",
+   "created": "2026-09-29T12:26:04Z",
+   "location": {
+    "area": [
+     "UK",
+     "London"
+    ],
+    "display_name": "London, UK",
+    "__CLASS__": "Adzuna::API::Response::Location"
+   },
+   "contract_time": "full_time",
+   "salary_is_predicted": "1",
+   "salary_max": 41859.48,
+   "__CLASS__": "Adzuna::API::Response::Job"
+  },
+  {
+   "id": "5878663174",
+   "redirect_url": "https://www.adzuna.co.uk/jobs/land/ad/5878663174?se=ZFVdEn--8RGdRLcUnFY4TA&utm_medium=api&utm_source=TESTAPPID&v=240588B68D8C22963E50D02B505C28BEC2AF26C4",
+   "__CLASS__": "Adzuna::API::Response::Job",
+   "created": "2026-09-10T16:53:34Z",
+   "location": {
+    "area": [
+     "UK",
+     "London"
+    ],
+    "display_name": "London, UK",
+    "__CLASS__": "Adzuna::API::Response::Location"
+   },
+   "contract_time": "full_time",
+   "salary_max": 71827.87,
+   "salary_is_predicted": "1",
+   "title": "Applied AI Director",
+   "adref": "eyJhbGciOiJIUzI1NiJ9.eyJpIjoiNTg3ODY2MzE3NCIsInMiOiJaRlZkRW4tLThSR2RSTGNVbkZZNFRBIn0.45_hbUQ2uGD71E8G3bpZU4peHCMnsIOdhKCD_PSavDw",
+   "salary_min": 71827.87,
+   "latitude": 51.503378,
+   "category": {
+    "tag": "it-jobs",
+    "label": "IT Jobs",
+    "__CLASS__": "Adzuna::API::Response::Category"
+   },
+   "company": {
+    "__CLASS__": "Adzuna::API::Response::Company",
+    "display_name": "JPMorganChase"
+   },
+   "longitude": -0.139134,
+   "description": "Description Join us as we redefine how the world’s largest bank operates by harnessing the power of open source and frontier AI models. You’ll have the opportunity to shape the future of operational automation, working with talented teams to deliver impactful, end-to-end solutions. At JPMorganChase, you’ll drive innovation, foster a culture of excellence, and see your work make a tangible difference. If you’re passionate about technical leadership and want to influence the next generation of AI…"
+  },
+  {
+   "description": "Working Environment You will work in a high-trust, delivery-focused environment where technical quality, judgement and real-world impact are valued. The team operates collaboratively, sharing knowledge and learning through delivery rather than theory alone. You will be trusted to manage your own work, engage directly with customers and stakeholders, and take responsibility for outcomes. What You'll Be Doing - Design, build and deploy applied AI and data science solutions that deliver measurable…",
+   "longitude": -0.139134,
+   "latitude": 51.503378,
+   "company": {
+    "__CLASS__": "Adzuna::API::Response::Company",
+    "display_name": "Impellam"
+   },
+   "category": {
+    "__CLASS__": "Adzuna::API::Response::Category",
+    "label": "IT Jobs",
+    "tag": "it-jobs"
+   },
+   "adref": "eyJhbGciOiJIUzI1NiJ9.eyJpIjoiNTg5ODUzNjgxMiIsInMiOiJaRlZkRW4tLThSR2RSTGNVbkZZNFRBIn0.DeKoOxeyONUv9n5J7qNByasemTmTvygEU2TC0BkQz1U",
+   "salary_min": 156000,
+   "title": "Applied AI Scientist",
+   "contract_time": "full_time",
+   "created": "2026-09-25T17:37:23Z",
+   "location": {
+    "__CLASS__": "Adzuna::API::Response::Location",
+    "display_name": "London, UK",
+    "area": [
+     "UK",
+     "London"
+    ]
+   },
+   "salary_is_predicted": "0",
+   "salary_max": 208000,
+   "__CLASS__": "Adzuna::API::Response::Job",
+   "id": "5898536812",
+   "redirect_url": "https://www.adzuna.co.uk/jobs/land/ad/5898536812?se=ZFVdEn--8RGdRLcUnFY4TA&utm_medium=api&utm_source=TESTAPPID&v=436836AD6E563B94F3A22CB216810909E0946887"
+  }
+ ]
+}
