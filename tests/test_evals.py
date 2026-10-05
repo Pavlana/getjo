@@ -124,20 +124,36 @@ class SweepTest(unittest.TestCase):
         self.assertIn("  FDE — Acme\n      on a career break", text)
 
 
+@mock.patch("evals.run.load_cv", return_value="cv")
 @mock.patch.dict("os.environ", {"ANTHROPIC_API_KEY": "key"})
 @mock.patch("evals.run.report", return_value="")
 @mock.patch("evals.run.score_cases", return_value=([], 0.0))
 @mock.patch("evals.run.load_cases", return_value=[])
 @mock.patch("evals.run.config.load_config", return_value={"profile": {"scoring": SCORING}})
 class MainTest(unittest.TestCase):
-    def test_uses_profile_model_by_default(self, _load_config, _load_cases, mock_score_cases, _report):
+    def test_uses_profile_model_by_default(self, _load_config, _load_cases, mock_score_cases, _report, _cv):
         main([])
         self.assertEqual(mock_score_cases.call_args[0][1]["model"], "claude-haiku-4-5")
 
-    def test_model_flag_overrides_profile_for_this_run_only(self, _load_config, _load_cases, mock_score_cases, _report):
+    def test_model_flag_overrides_profile_for_this_run_only(self, _load_config, _load_cases, mock_score_cases, _report, _cv):
         main(["--model", "claude-sonnet-5"])
         self.assertEqual(mock_score_cases.call_args[0][1]["model"], "claude-sonnet-5")
         self.assertEqual(SCORING["model"], "claude-haiku-4-5")
+
+    def test_ci_uses_committed_set_not_private_config(self, mock_load_config, mock_load_cases, mock_score_cases, _report, mock_cv):
+        main(["--ci"])
+        mock_load_config.assert_not_called()
+        mock_load_cases.assert_called_once_with(Path("evals/ci/cases.jsonl"))
+        mock_cv.assert_called_once_with(Path("evals/ci/cv.md"))
+        self.assertIn("rubric", mock_score_cases.call_args[0][1])  # from evals/ci/profile.toml
+
+    def test_min_agreement_fails_the_run_below_it(self, _load_config, _load_cases, mock_score_cases, _report, _cv):
+        agree, disagree = {"expected": "apply", "predicted": "apply"}, {"expected": "skip", "predicted": "apply"}
+        mock_score_cases.return_value = ([agree, agree, disagree], 0.0)
+        main(["--min-agreement", "2"])  # 2 of 3 agree: passes
+        with self.assertRaises(SystemExit) as ctx:
+            main(["--min-agreement", "3"])
+        self.assertEqual(ctx.exception.code, 1)
 
 
 class LoadCasesTest(unittest.TestCase):
@@ -193,7 +209,7 @@ class ScoreCasesTest(unittest.TestCase):
             {"job_id": "j2", "expected": "skip", "reason": "pre-sales", "title": "Sales Engineer", "company": "Acme"},
         ]
 
-        results, cost = score_cases(cases, SCORING, "key")
+        results, cost = score_cases(cases, SCORING, "key", "cv")
         text = report(results, cost, SCORING)
 
         self.assertAlmostEqual(cost, 0.008)
@@ -205,11 +221,24 @@ class ScoreCasesTest(unittest.TestCase):
         self.assertIn("Claude's red flag: pre-sales", text)
         self.assertNotIn("AI Engineer — Acme", text)  # agreements aren't listed
 
+    def test_case_with_its_own_job_text_needs_no_database(self, mock_connect, mock_score, _):
+        mock_score.return_value = (scored(8, reasons=["fit"]), [])
+        case = {"job_id": "ci-1", "expected": "apply", "title": "AI Engineer", "company": "Example Co",
+                "location": "London", "description": "Build LLM apps in Python."}
+
+        results, _cost = score_cases([case], SCORING, "key", "cv")
+
+        mock_connect.assert_not_called()
+        job = mock_score.call_args[0][0]
+        self.assertEqual(job, {"id": "ci-1", "title": "AI Engineer", "company": "Example Co",
+                               "location": "London", "description": "Build LLM apps in Python."})
+        self.assertEqual(results[0]["predicted"], "apply")
+
     def test_never_writes_scores(self, mock_connect, mock_score, _):
         mock_connect.side_effect = lambda: real_connect(self.db_path)
         mock_score.return_value = (scored(8, reasons=["x"]), [])
 
-        score_cases([{"job_id": "j1", "expected": "apply"}], SCORING, "key")
+        score_cases([{"job_id": "j1", "expected": "apply"}], SCORING, "key", "cv")
 
         conn = real_connect(self.db_path)
         self.assertEqual(conn.execute("SELECT score, score_attempts FROM jobs WHERE id = 'j1'").fetchone(), (None, 0))
@@ -219,7 +248,7 @@ class ScoreCasesTest(unittest.TestCase):
         mock_connect.side_effect = lambda: real_connect(self.db_path)
 
         with self.assertRaisesRegex(ConfigError, "missing-job"):
-            score_cases([{"job_id": "missing-job", "expected": "skip"}], SCORING, "key")
+            score_cases([{"job_id": "missing-job", "expected": "skip"}], SCORING, "key", "cv")
         mock_score.assert_not_called()
 
     def test_result_with_no_reasons_or_red_flags_is_reported(self, mock_connect, mock_score, _):
@@ -227,7 +256,7 @@ class ScoreCasesTest(unittest.TestCase):
         mock_score.return_value = (scored(8), [])
 
         results, cost = score_cases(
-            [{"job_id": "j1", "expected": "skip", "title": "AI Engineer", "company": "Acme"}], SCORING, "key"
+            [{"job_id": "j1", "expected": "skip", "title": "AI Engineer", "company": "Acme"}], SCORING, "key", "cv"
         )
 
         self.assertIn("(no reasons or red flags given)", report(results, cost, SCORING))
@@ -238,7 +267,7 @@ class ScoreCasesTest(unittest.TestCase):
         mock_score.return_value = (scored(3, reasons=["fit"], dealbreakers=[travel], raw_score=8), [])
 
         results, cost = score_cases(
-            [{"job_id": "j1", "expected": "apply", "title": "AI Engineer", "company": "Acme"}], SCORING, "key"
+            [{"job_id": "j1", "expected": "apply", "title": "AI Engineer", "company": "Acme"}], SCORING, "key", "cv"
         )
         text = report(results, cost, SCORING)
 
@@ -250,7 +279,7 @@ class ScoreCasesTest(unittest.TestCase):
         mock_score.return_value = (None, [Completion("bad", 1, 1, 0.004), Completion("bad", 1, 1, 0.004)])
 
         results, cost = score_cases(
-            [{"job_id": "j1", "expected": "skip", "title": "AI Engineer", "company": "Acme"}], SCORING, "key"
+            [{"job_id": "j1", "expected": "skip", "title": "AI Engineer", "company": "Acme"}], SCORING, "key", "cv"
         )
         text = report(results, cost, SCORING)
 

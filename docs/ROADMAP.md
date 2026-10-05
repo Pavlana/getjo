@@ -112,7 +112,8 @@ Tick a box only when its acceptance criteria pass.
 - [x] Workday: optional `search` per target (e.g. "London"), for employers with more than Workday's 2,000-posting listing cap
 - [x] Amazon (amazon.jobs search, full descriptions in the results)
 - [x] Microsoft (Eightfold search API; check descriptions live first)
-- [ ] JPMorganChase (Oracle Cloud recruiting API; check the location filter live first)
+- ~~JPMorganChase (Oracle Cloud recruiting API)~~ dropped: one employer, its feed ignored the location filter in a test, and its roles can still arrive through the search sources
+- [x] Evals as a CI gate: GitHub Actions runs the unit tests on every push, and the scoring eval on a committed made-up candidate set (`evals/ci/`) when scoring code changes; the build fails below 8 of 10 agreements
 
 **Acceptance:** each employer's matching London roles appear in a dry run; a change in an undocumented feed shows up as a fetch error, not as silently missing jobs.
 **Concept:** undocumented APIs as dependencies: pin their shape with fixtures, fail loudly when it changes.
@@ -122,7 +123,6 @@ Tick a box only when its acceptance criteria pass.
 ## Later (only after applications have started)
 
 - Targets with no readable job board: a paste-in command for a single job (URL + description copied by hand, then stored, scored and notified like any other), job-alert emails as a discovery feed, manual LinkedIn search
-- Evals in GitHub Actions on every push; the build fails below an agreed threshold. CI has no access to the private CV, profile or labelled cases, so it would use a committed set with a made-up candidate (CV, profile, ~10 cases with job text inline): it guards the code (prompt, parsing, dealbreaker checks), while the local eval keeps judging fit. Concept: evals as a CI gate
 - Proton inbox module (IMAP via Bridge): threads waiting for my reply, drafts to the Drafts folder
 - Application Pack: job + master CV → tailored bullets checked against the CV for invented claims
 - Hand-written tool-use loop over radar + inbox ("what needs me today?")

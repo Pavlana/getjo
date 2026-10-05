@@ -1,6 +1,7 @@
 """Score the hand-labelled cases and compare Claude's verdicts with yours.
 
-Run: python -m evals.run
+Run: python -m evals.run                         (your private cases, CV and profile)
+     python -m evals.run --ci --min-agreement 8  (the committed made-up set; exits 1 below 8 agreements)
 """
 
 import argparse
@@ -15,6 +16,9 @@ from core.config import ConfigError
 from jobs.score import load_cv, score_with_retry
 
 CASES_PATH = Path("evals/cases/scoring.jsonl")
+# A made-up candidate and job postings, committed so CI can run the eval without private data.
+# It guards the code (prompt, parsing, dealbreaker checks); the private set judges real fit.
+CI_DIR = Path("evals/ci")
 LABELS = ("apply", "maybe", "skip")
 SKIP_MAX = 3  # a score of 3 or lower counts as "skip"
 SWEEP = range(5, 10)  # thresholds to compare on the same scores
@@ -100,14 +104,19 @@ def _claude_note(result: dict | None) -> str:
     return "(no reasons or red flags given)"
 
 
-def score_cases(cases: list[dict], scoring_cfg: dict, api_key: str) -> tuple[list[dict], float]:
-    """Score every case with the production prompt. Reads the database, never writes to it."""
-    conn = store.connect()
-    cv_text = load_cv()
+def score_cases(cases: list[dict], scoring_cfg: dict, api_key: str, cv_text: str) -> tuple[list[dict], float]:
+    """Score every case with the production prompt. A case that carries its own job text
+    (title, company, location, description) is scored as is; otherwise the job is read from the
+    database, which is never written to."""
+    conn = None
     results, cost = [], 0.0
     try:
         for case in cases:
-            job = store.get_job(conn, case["job_id"])
+            if "description" in case:
+                job = {"id": case["job_id"], **{k: case[k] for k in ("title", "company", "location", "description")}}
+            else:
+                conn = conn or store.connect()
+                job = store.get_job(conn, case["job_id"])
             if job is None:
                 raise ConfigError(f"case {case['job_id']} is not in data/jobs.db")
             result, completions = score_with_retry(
@@ -125,7 +134,8 @@ def score_cases(cases: list[dict], scoring_cfg: dict, api_key: str) -> tuple[lis
                 "personal_mentions": personal_mentions(result),
             })
     finally:
-        conn.close()
+        if conn:
+            conn.close()
     return results, cost
 
 
@@ -174,15 +184,27 @@ def report(results: list[dict], cost: float, scoring_cfg: dict) -> str:
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Score the labelled cases and compare with the labels.")
     parser.add_argument("--model", help="score with this model instead of profile.toml's scoring.model")
+    parser.add_argument("--ci", action="store_true", help="use the committed made-up set in evals/ci/")
+    parser.add_argument("--min-agreement", type=int, help="exit with status 1 if fewer cases agree")
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.WARNING, stream=sys.stdout, format="%(levelname)s %(name)s: %(message)s")
-    scoring_cfg = config.load_config()["profile"]["scoring"]
+    if args.ci:
+        scoring_cfg = config.load_toml(CI_DIR / "profile.toml")["scoring"]
+        cases, cv_text = load_cases(CI_DIR / "cases.jsonl"), load_cv(CI_DIR / "cv.md")
+    else:
+        scoring_cfg = config.load_config()["profile"]["scoring"]
+        cases, cv_text = load_cases(), load_cv()
     if args.model:
         scoring_cfg = {**scoring_cfg, "model": args.model}
     api_key = config.require_env(["ANTHROPIC_API_KEY"])["ANTHROPIC_API_KEY"]
-    results, cost = score_cases(load_cases(), scoring_cfg, api_key)
+    results, cost = score_cases(cases, scoring_cfg, api_key, cv_text)
     print(report(results, cost, scoring_cfg))
+
+    agreed, total = summarize(results)["agreement"]
+    if args.min_agreement is not None and agreed < args.min_agreement:
+        print(f"\nFAIL: {agreed}/{total} cases agree, below the minimum of {args.min_agreement}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

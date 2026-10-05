@@ -1,0 +1,36 @@
+# Scoring eval as a CI gate: scores the committed made-up set (evals/ci/) with the real model and fails
+# below 8 of 10 agreements. Runs only when scoring code or the eval changes (~$0.05 a run), or by hand.
+# Needs the repository secret ANTHROPIC_API_KEY. Pull requests from forks don't get secrets, so this
+# runs on pushes to main only.
+name: evals
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "jobs/score.py"
+      - "core/llm.py"
+      - "evals/**"
+      - ".github/workflows/evals.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: evals
+  cancel-in-progress: true
+
+jobs:
+  scoring-eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m evals.run --ci --min-agreement 8
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

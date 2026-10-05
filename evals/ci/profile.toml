@@ -1,0 +1,24 @@
+# Profile for the fictional CI candidate (evals/ci/cv.md). Same model and threshold as production, so the
+# gate checks the scoring code under the settings it really runs with.
+[scoring]
+model = "claude-sonnet-5"
+notify_threshold = 5
+
+rubric = [
+  "Hands-on work building LLM applications (RAG, agents, evaluation) in Python is central to the role",
+  "Senior individual-contributor or tech-lead level; the candidate has 9 years' experience",
+  "Customer-facing engineering (forward deployed, solutions engineering) is welcome; research roles are not a fit",
+  "Location and working pattern fit the candidate facts below",
+]
+
+candidate_facts = [
+  "Based in London; not relocating",
+  "On-site, hybrid or fully remote in the UK are all fine",
+]
+
+dealbreakers = [
+  "Requires speaking a language other than English",
+  "Role carries a sales quota or is primarily selling",
+  "Junior, graduate or trainee level",
+  "People management with no hands-on engineering",
+]
