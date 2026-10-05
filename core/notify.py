@@ -32,8 +32,9 @@ def _split(text: str, max_chars: int = MAX_CHARS) -> list[str]:
     return chunks
 
 
-def _post_with_retry(url: str, payload: dict) -> None:
-    """POST with a timeout; retry on 429/5xx with exponential backoff, capped."""
+def _post_with_retry(url: str, payload: dict, token: str) -> None:
+    """POST with a timeout; retry on 429/5xx with exponential backoff, capped. The bot token is
+    part of the URL, so it is replaced with *** in log lines (error text can quote the URL)."""
     delay = BACKOFF_BASE
     for attempt in range(1, MAX_RETRIES + 1):
         try:
@@ -41,7 +42,7 @@ def _post_with_retry(url: str, payload: dict) -> None:
         except requests.RequestException as e:
             if attempt == MAX_RETRIES:
                 raise
-            logger.warning("telegram request failed (%s), retrying in %.0fs", e, delay)
+            logger.warning("telegram request failed (%s), retrying in %.0fs", str(e).replace(token, "***"), delay)
             time.sleep(delay)
             delay *= 2
             continue
@@ -62,7 +63,14 @@ def _post_with_retry(url: str, payload: dict) -> None:
 
 
 def send_telegram(text: str, *, token: str, chat_id: str) -> None:
-    """Send text to a Telegram chat, splitting into multiple messages if too long."""
+    """Send text to a Telegram chat, splitting into multiple messages if too long.
+
+    Errors are re-raised with the token replaced by ***: requests quotes the URL in its error
+    messages, and callers log them, store them in runs.errors and repeat them in the run summary.
+    """
     url = f"{TELEGRAM_API}/bot{token}/sendMessage"
-    for chunk in _split(text):
-        _post_with_retry(url, {"chat_id": chat_id, "text": chunk})
+    try:
+        for chunk in _split(text):
+            _post_with_retry(url, {"chat_id": chat_id, "text": chunk}, token)
+    except requests.RequestException as e:
+        raise type(e)(str(e).replace(token, "***")) from None  # "from None": the original quotes the URL

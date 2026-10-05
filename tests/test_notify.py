@@ -87,6 +87,31 @@ class SendTelegramTest(unittest.TestCase):
             send_telegram("hi", token=TOKEN, chat_id=CHAT_ID)
         self.assertEqual(mock_post.call_count, 5)
 
+    @mock.patch("core.notify.requests.post")
+    def test_token_redacted_from_raised_error(self, mock_post):
+        url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+        resp = make_response(401)
+        resp.raise_for_status.side_effect = requests.HTTPError(f"401 Client Error: Unauthorized for url: {url}")
+        mock_post.return_value = resp
+
+        with self.assertRaises(requests.HTTPError) as ctx:
+            send_telegram("hi", token=TOKEN, chat_id=CHAT_ID)
+
+        self.assertNotIn(TOKEN, str(ctx.exception))
+        self.assertIn("/bot***/sendMessage", str(ctx.exception))
+        self.assertIsNone(ctx.exception.__cause__)
+
+    @mock.patch("core.notify.time.sleep")
+    @mock.patch("core.notify.requests.post")
+    def test_token_redacted_from_retry_log_lines(self, mock_post, mock_sleep):
+        mock_post.side_effect = [
+            requests.ConnectionError(f"Max retries exceeded with url: /bot{TOKEN}/sendMessage"),
+            make_response(200),
+        ]
+        with self.assertLogs("core.notify", level="WARNING") as logs:
+            send_telegram("hi", token=TOKEN, chat_id=CHAT_ID)
+        self.assertNotIn(TOKEN, "\n".join(logs.output))
+
 
 if __name__ == "__main__":
     unittest.main()
