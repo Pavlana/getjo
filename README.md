@@ -68,7 +68,7 @@ python -m jobs.discover          # companies hiring for matching titles that are
 
 ### On a schedule (macOS launchd)
 
-`scripts/run_radar.sh` loads `.env` and runs the radar once; `scripts/com.getjo.radar.plist` runs it daily at 09:00 and appends output to `data/radar.log`.
+`scripts/run_radar.sh` loads `.env` and runs the radar once; `scripts/com.getjo.radar.plist` runs it on Mondays and Thursdays at 11:00 and appends output to `data/radar.log`.
 
 ```bash
 # install (from the repo root; .env and .venv must exist)
@@ -106,13 +106,13 @@ GitHub Actions runs the unit tests on every push. When scoring code or the eval 
 - **Duplicates across sources** are detected by employer name only, so the same job posted by a recruitment agency, or under a different company name, can arrive twice.
 - **Descriptions vary.** Lever and Ashby give a shorter summary than the full posting; a dealbreaker stated only in an omitted section can't be quoted, so the job isn't capped.
 - **Thresholds are model-specific.** Changing the scoring model means re-reading the eval's threshold sweep, not keeping the old number.
-- **Runs on one Mac.** If it is off, nothing runs and nothing outside the Mac raises an alert; the missing daily summary is the only signal.
-- **Cost** is about $0.012 per newly scored job with Claude Sonnet 5; a typical day costs a few cents, a day with many new postings around $1.
+- **Runs on one Mac.** If it is off, nothing runs and nothing outside the Mac raises an alert; the missing run summary is the only signal.
+- **Cost** is about $0.012 per newly scored job with Claude Sonnet 5; a typical scheduled run costs about ten cents, more after adding many companies at once.
 
 ## What's next
 
 - Paste-in command for a single job found by hand (any site), stored, scored and notified like the rest.
-- Run in Azure (Container Apps job on a schedule, Key Vault, managed identity) with an external "dead man's switch" that alerts when a daily run doesn't check in.
+- Run in Azure (Container Apps job on a schedule, Key Vault, managed identity) with an external "dead man's switch" that alerts when a scheduled run doesn't check in.
 - Job-alert emails as a discovery feed.
 - Application pack: tailored CV bullets for one job, checked against the CV for invented claims.
 

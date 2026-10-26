@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- launchd job: run the radar daily at 09:00. REPO_DIR is replaced at install time (see README). -->
+<!-- launchd job: run the radar Mondays and Thursdays at 11:00. REPO_DIR is replaced at install time (see README). -->
 <plist version="1.0">
 <dict>
     <key>Label</key>
@@ -11,12 +11,24 @@
         <string>REPO_DIR/scripts/run_radar.sh</string>
     </array>
     <key>StartCalendarInterval</key>
-    <dict>
-        <key>Hour</key>
-        <integer>9</integer>
-        <key>Minute</key>
-        <integer>0</integer>
-    </dict>
+    <array>
+        <dict>
+            <key>Weekday</key>
+            <integer>1</integer>
+            <key>Hour</key>
+            <integer>11</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key>
+            <integer>4</integer>
+            <key>Hour</key>
+            <integer>11</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+    </array>
     <key>StandardOutPath</key>
     <string>REPO_DIR/data/radar.log</string>
     <key>StandardErrorPath</key>

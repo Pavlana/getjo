@@ -37,7 +37,7 @@ How a job gets its score, step by step (prompt, reply checks, dealbreaker quotes
 
 ## Discovery
 
-`python -m jobs.discover`, run by hand, widens the list the daily run watches: it searches Adzuna (title match, near the configured location, last 30 days), drops companies that are already targets, and guesses each remaining company's board name on Greenhouse, Ashby, Lever and SmartRecruiters. A board counts as found only if it lists jobs, and the report shows a sample title to check it is the right company. Workday and Workable aren't probed (Workday names can't be guessed; Workable rate-limits guesses). Nothing is added to `targets.toml` automatically.
+`python -m jobs.discover`, run by hand, widens the list the scheduled run watches: it searches Adzuna (title match, near the configured location, last 30 days), drops companies that are already targets, and guesses each remaining company's board name on Greenhouse, Ashby, Lever and SmartRecruiters. A board counts as found only if it lists jobs, and the report shows a sample title to check it is the right company. Workday and Workable aren't probed (Workday names can't be guessed; Workable rate-limits guesses). Nothing is added to `targets.toml` automatically.
 
 ## Known limitations
 
