@@ -43,6 +43,11 @@ class ParseTest(unittest.TestCase):
 @mock.patch("sources.workday.get_with_retry")
 @mock.patch("sources.workday.post_with_retry")
 class FetchJobsTest(unittest.TestCase):
+    def setUp(self):
+        patcher = mock.patch("sources.workday.time.sleep")
+        self.sleep = patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_details_fetched_only_for_wanted_titles(self, mock_post, mock_get):
         mock_post.return_value = response(LIST)
         mock_get.return_value = response(DETAIL)
@@ -68,6 +73,15 @@ class FetchJobsTest(unittest.TestCase):
         self.assertEqual(mock_post.call_args.args[1]["offset"], 20)
         self.assertEqual(len(jobs), 21)
         mock_get.assert_not_called()
+        self.sleep.assert_called_once_with(1.0)  # before the second page only
+
+    def test_listing_that_is_not_json_raises_with_start_of_body(self, mock_post, mock_get):
+        page = mock.Mock(status_code=200, headers={"Content-Type": "text/html"}, text="<html>Down for maintenance</html>")
+        page.json.side_effect = ValueError("Expecting value: line 1 column 1 (char 0)")
+        mock_post.return_value = page
+
+        with self.assertRaisesRegex(ValueError, r"HTTP 200, text/html\): '<html>Down for maintenance"):
+            fetch_jobs("Kainos", BOARD, wanted=lambda title: False)
 
     def test_search_text_sent_to_the_site(self, mock_post, mock_get):
         mock_post.return_value = response({"total": 0, "jobPostings": []})

@@ -6,6 +6,7 @@ fetched only for titles the caller wants (the radar's title filter).
 """
 
 import logging
+import time
 from collections.abc import Callable
 from datetime import datetime, timezone
 from urllib.parse import urlencode
@@ -14,6 +15,8 @@ from core.http import get_with_retry
 from sources.html_text import html_to_text
 
 logger = logging.getLogger(__name__)
+
+PAGE_DELAY = 1.0  # seconds between search pages; Microsoft's site returned 429 without it
 
 
 def _site(board: str) -> tuple[str, str]:
@@ -55,6 +58,8 @@ def fetch_jobs(company: str, board: str, wanted: Callable[[str], bool], search: 
 
     listed, start, total = [], 0, None
     while total is None or start < total:
+        if start:
+            time.sleep(PAGE_DELAY)
         params = {"domain": domain, "query": "", "location": search, "start": start}
         data = get_with_retry(f"{api}/search?{urlencode(params)}", label="eightfold").json()["data"]
         total = data["count"]

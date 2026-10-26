@@ -9,6 +9,7 @@ only for titles the caller wants (the radar's title filter); other postings are 
 """
 
 import logging
+import time
 from collections.abc import Callable
 from datetime import datetime, timezone
 
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 PAGE_SIZE = 20  # the most Workday returns per request
 LISTING_CAP = 2000  # Workday never reports or pages past this many postings
+PAGE_DELAY = 1.0  # seconds between listing pages; big sites (Accenture) returned 429 without it
 
 
 def _site(board: str) -> tuple[str, str, str]:
@@ -60,6 +62,18 @@ def add_details(job: dict, detail: dict) -> dict:
     }
 
 
+def _listing_page(url: str, payload: dict) -> dict:
+    """POST for one listing page; a 200 that is not JSON raises with the start of the body."""
+    response = post_with_retry(url, payload, label="workday")
+    try:
+        return response.json()
+    except ValueError:  # requests' JSONDecodeError is a ValueError
+        raise ValueError(
+            f"listing not JSON (HTTP {response.status_code}, {response.headers.get('Content-Type')}): "
+            f"{response.text[:200]!r}"
+        ) from None
+
+
 def fetch_jobs(company: str, board: str, wanted: Callable[[str], bool], search: str = "") -> list[dict]:
     """Fetch all postings for one Workday site; fetch details only for titles where wanted(title).
 
@@ -72,10 +86,11 @@ def fetch_jobs(company: str, board: str, wanted: Callable[[str], bool], search: 
 
     listed, offset, total = [], 0, None
     while total is None or offset < total:
-        page = post_with_retry(
-            f"{api}/jobs", {"limit": PAGE_SIZE, "offset": offset, "searchText": search, "appliedFacets": {}},
-            label="workday",
-        ).json()
+        if offset:
+            time.sleep(PAGE_DELAY)
+        page = _listing_page(
+            f"{api}/jobs", {"limit": PAGE_SIZE, "offset": offset, "searchText": search, "appliedFacets": {}}
+        )
         if total is None:
             total = page["total"]  # later pages can report 0
             if total >= LISTING_CAP:

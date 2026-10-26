@@ -47,6 +47,11 @@ class ParseTest(unittest.TestCase):
 
 @mock.patch("sources.eightfold.get_with_retry")
 class FetchJobsTest(unittest.TestCase):
+    def setUp(self):
+        patcher = mock.patch("sources.eightfold.time.sleep")
+        self.sleep = patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_searches_location_and_fetches_details_only_for_wanted(self, mock_get):
         mock_get.side_effect = [page(POSITIONS, 3), response(DETAIL)]
 
@@ -67,6 +72,7 @@ class FetchJobsTest(unittest.TestCase):
 
         self.assertIn("start=3", mock_get.call_args.args[0])
         self.assertEqual(len(jobs), 5)
+        self.sleep.assert_called_once_with(1.0)  # before the second page only
 
     def test_failed_details_skip_that_position_only(self, mock_get):
         mock_get.side_effect = [page(POSITIONS, 3), Exception("503")]
